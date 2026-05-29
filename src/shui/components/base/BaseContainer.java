@@ -21,12 +21,11 @@ import shui.delegates.visual.ShadowDelegate;
 import shui.delegates.visual.ShapeDelegate;
 import shui.delegates.visual.StateDelegate;
 import shui.delegates.visual.ThemeDelegate;
-import shui.security.AbstractSecuredComponent;
 import shui.theme.ShTheme;
 import java.awt.*;
 import javax.swing.Icon;
 import javax.swing.JPanel;
-import shui.security.Contexable;
+
 
 /**
  * Componente base abstracto que unifica todas las capacidades visuales y de
@@ -53,7 +52,7 @@ import shui.security.Contexable;
  */
 public abstract class BaseContainer extends JPanel
         implements Borderable, Colorable, Shadowable, Gradientable, Shapeable, Hoverable,
-        Imageable, Stateable, Animatable, Themeable, Contexable {
+        Imageable, Stateable, Animatable, Themeable {
 
     private final BorderDelegate borderDelegate;
     private final ColorDelegate colorDelegate;
@@ -65,7 +64,6 @@ public abstract class BaseContainer extends JPanel
     private final StateDelegate stateDelegate;
     private final AnimationDelegate animationDelegate;
     private final ThemeDelegate themeDelegate;
-    private final AbstractSecuredComponent securityDelegate;
     private int contentPadding;
 
     protected BaseContainer(int cornerRadius, Color backgroundColor) {
@@ -80,8 +78,7 @@ public abstract class BaseContainer extends JPanel
         this.stateDelegate = new StateDelegate(this);
         this.animationDelegate = new AnimationDelegate(this);
         this.themeDelegate = new ThemeDelegate(this);
-        this.securityDelegate = new AbstractSecuredComponent() {
-        };
+
         // FIX: sincronizar radio inicial al ShadowDelegate
         this.shadowDelegate.setCornerRadius(cornerRadius);
         this.themeDelegate.register(this);
@@ -678,18 +675,6 @@ public abstract class BaseContainer extends JPanel
                 setStateBorderColor(state, border);
             }
         }
-    }
-
-    // ── Contexable ───────────────────────────────────────────────────────────
-    @Override
-    public void setContext(shui.security.ContextInfo contextInfo) {
-        securityDelegate.setContext(contextInfo);
-    }
-
-    @Override
-    @java.beans.Transient
-    public shui.security.ContextInfo getContext() {
-        return securityDelegate.getContext();
     }
 
     @Override

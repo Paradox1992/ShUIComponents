@@ -20,6 +20,7 @@ public class formtest extends javax.swing.JFrame {
      */
     public formtest() {
         initComponents();
+       
     }
 
     /**
