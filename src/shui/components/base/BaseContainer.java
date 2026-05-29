@@ -66,6 +66,7 @@ public abstract class BaseContainer extends JPanel
     private final AnimationDelegate animationDelegate;
     private final ThemeDelegate themeDelegate;
     private final AbstractSecuredComponent securityDelegate;
+    private int contentPadding;
 
     protected BaseContainer(int cornerRadius, Color backgroundColor) {
         setOpaque(false);
@@ -149,8 +150,18 @@ public abstract class BaseContainer extends JPanel
 
     @Override
     public Insets getInsets() {
-        int pad = shapeDelegate.getRecommendedPadding();
+        int pad = Math.max(0, contentPadding);
         return new Insets(pad, pad, pad, pad);
+    }
+
+    public void setContentPadding(int padding) {
+        this.contentPadding = Math.max(0, padding);
+        revalidate();
+        repaint();
+    }
+
+    public int getContentPadding() {
+        return contentPadding;
     }
 
     // ── Borderable ───────────────────────────────────────────────────────────
