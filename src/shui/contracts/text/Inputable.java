@@ -1,5 +1,6 @@
 package shui.contracts.text;
 
+import java.awt.Color;
 import java.time.LocalDate;
 
 /**
@@ -111,4 +112,12 @@ public interface Inputable {
     void setEditable(boolean editable);
 
     boolean isEditable();
+
+    void setInputBarVisible(boolean visible);
+
+    boolean isInputBarVisible();
+
+    void setInputBarColor(Color color);
+
+    Color getInputBarColor();
 }

@@ -54,6 +54,8 @@ public class JInput extends BaseContainer implements Inputable {
     private boolean headerVisible = true;
     private boolean autoValidate = true;
     private boolean showValidationState = true;
+    private boolean inputBarVisible = true;
+    private Color inputBarColor = Color.BLACK;
     private boolean updatingText;
 
     public JInput() {
@@ -64,6 +66,7 @@ public class JInput extends BaseContainer implements Inputable {
         setVisualState(VisualState.NONE);
         buildHeader();
         buildEditors();
+        updateInputBarStyle();
         updateHeaderLayout();
         setInputType(InputType.TEXT);
     }
@@ -413,6 +416,31 @@ public class JInput extends BaseContainer implements Inputable {
     }
 
     @Override
+    public void setInputBarVisible(boolean visible) {
+        this.inputBarVisible = visible;
+        updateInputBarStyle();
+    }
+
+    @Override
+    public boolean isInputBarVisible() {
+        return inputBarVisible;
+    }
+
+    @Override
+    public void setInputBarColor(Color color) {
+        if (color == null) {
+            return;
+        }
+        this.inputBarColor = color;
+        updateInputBarStyle();
+    }
+
+    @Override
+    public Color getInputBarColor() {
+        return inputBarColor;
+    }
+
+    @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         textField.setEnabled(enabled);
@@ -428,6 +456,13 @@ public class JInput extends BaseContainer implements Inputable {
             case DATE -> dateField;
             default -> textField;
         };
+    }
+
+    private void updateInputBarStyle() {
+        Color visibleColor = inputBarVisible ? inputBarColor : new Color(0, 0, 0, 0);
+        editorHost.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, visibleColor));
+        revalidate();
+        repaint();
     }
 
     private void updateHeaderLayout() {
