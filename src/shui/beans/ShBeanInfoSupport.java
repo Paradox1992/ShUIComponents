@@ -21,14 +21,21 @@ public abstract class ShBeanInfoSupport extends SimpleBeanInfo {
     private final Class<?> beanClass;
     private final String displayName;
     private final String description;
+    private final String iconPath;
     private final String[] preferredProperties;
     private final Set<String> hiddenProperties;
 
     protected ShBeanInfoSupport(Class<?> beanClass, String displayName, String description,
             String[] preferredProperties, String... hiddenProperties) {
+        this(beanClass, displayName, description, null, preferredProperties, hiddenProperties);
+    }
+
+    protected ShBeanInfoSupport(Class<?> beanClass, String displayName, String description, String iconPath,
+            String[] preferredProperties, String... hiddenProperties) {
         this.beanClass = beanClass;
         this.displayName = displayName;
         this.description = description;
+        this.iconPath = iconPath;
         this.preferredProperties = preferredProperties != null ? preferredProperties.clone() : new String[0];
         this.hiddenProperties = new HashSet<>();
         if (hiddenProperties != null) {
@@ -70,7 +77,10 @@ public abstract class ShBeanInfoSupport extends SimpleBeanInfo {
 
     @Override
     public Image getIcon(int iconKind) {
-        java.net.URL url = ShBeanInfoSupport.class.getResource(DEFAULT_ICON);
+        java.net.URL url = iconPath != null ? ShBeanInfoSupport.class.getResource(iconPath) : null;
+        if (url == null) {
+            url = ShBeanInfoSupport.class.getResource(DEFAULT_ICON);
+        }
         return url != null ? new ImageIcon(url).getImage() : null;
     }
 

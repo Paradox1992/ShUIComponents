@@ -2,10 +2,11 @@ package com.ShInputs;
 
 import shui.beans.ShBeanInfoSupport;
 
-public class JInputBeanInfo extends ShBeanInfoSupport {
+public class ShInputBeanInfo extends ShBeanInfoSupport {
 
-    public JInputBeanInfo() {
-        super(JInput.class, "JInput", "Campo de entrada Shui con tipos, header y validaciones.",
+    public ShInputBeanInfo() {
+        super(ShInput.class, "ShInput", "Campo de entrada Shui con tipos, header y validaciones.",
+                "/shui/assets/shinput.png",
                 new String[]{
                     "inputType", "inputDataType", "text", "placeholder",
                     "headerText", "headerPosition", "headerVisible", "headerForeground", "headerFont",

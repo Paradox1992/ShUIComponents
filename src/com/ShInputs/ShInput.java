@@ -28,7 +28,7 @@ import javax.swing.text.JTextComponent;
 /**
  * Componente de entrada con tipos de texto, password, descripcion y fecha.
  */
-public class JInput extends BaseContainer implements Inputable {
+public class ShInput extends BaseContainer implements Inputable {
 
     private static final String CARD_TEXT = "TEXT";
     private static final String CARD_PASSWORD = "PASSWORD";
@@ -51,14 +51,15 @@ public class JInput extends BaseContainer implements Inputable {
     private String placeholder = "";
     private String headerText = "";
     private HeaderPosition headerPosition = HeaderPosition.TOP_LEFT;
-    private boolean headerVisible = true;
+    private boolean headerVisible = false;
     private boolean autoValidate = true;
-    private boolean showValidationState = true;
+    private boolean showValidationState = false;
     private boolean inputBarVisible = true;
-    private Color inputBarColor = Color.BLACK;
+    private Color inputBarColor = new Color(153, 153, 153);
     private boolean updatingText;
+    private Font textFont = new Font("Segoe UI", 0, 13);
 
-    public JInput() {
+    public ShInput() {
         super(10, EMPTY_BG);
         setLayout(new BorderLayout());
         setBackground(EMPTY_BG);
@@ -135,10 +136,14 @@ public class JInput extends BaseContainer implements Inputable {
         String current = getText();
         this.inputType = next;
         switch (next) {
-            case PASSWORD -> cardLayout.show(editorHost, CARD_PASSWORD);
-            case DESCRIPTION -> cardLayout.show(editorHost, CARD_DESCRIPTION);
-            case DATE -> cardLayout.show(editorHost, CARD_DATE);
-            default -> cardLayout.show(editorHost, CARD_TEXT);
+            case PASSWORD ->
+                cardLayout.show(editorHost, CARD_PASSWORD);
+            case DESCRIPTION ->
+                cardLayout.show(editorHost, CARD_DESCRIPTION);
+            case DATE ->
+                cardLayout.show(editorHost, CARD_DATE);
+            default ->
+                cardLayout.show(editorHost, CARD_TEXT);
         }
         setText(current);
         revalidate();
@@ -451,10 +456,14 @@ public class JInput extends BaseContainer implements Inputable {
 
     private JTextComponent activeEditor() {
         return switch (inputType) {
-            case PASSWORD -> passwordField;
-            case DESCRIPTION -> textArea;
-            case DATE -> dateField;
-            default -> textField;
+            case PASSWORD ->
+                passwordField;
+            case DESCRIPTION ->
+                textArea;
+            case DATE ->
+                dateField;
+            default ->
+                textField;
         };
     }
 
@@ -573,4 +582,16 @@ public class JInput extends BaseContainer implements Inputable {
         g.setColor(new Color(130, 130, 130));
         g.drawString(placeholder, component.getInsets().left, component.getInsets().top + metrics.getAscent());
     }
+
+    public void setTextFont(Font textFont) {
+        this.textFont = textFont;
+        if (activeEditor() != null) {
+            activeEditor().setFont(this.textFont);
+        }
+    }
+
+    public Font getTextFont() {
+        return textFont;
+    }
+
 }
