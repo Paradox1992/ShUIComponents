@@ -49,12 +49,14 @@ public class ShInput extends BaseContainer implements Inputable {
 
     private InputType inputType = InputType.TEXT;
     private String placeholder = "";
+    private Font placeholderFont;
     private String headerText = "";
     private HeaderPosition headerPosition = HeaderPosition.TOP_LEFT;
     private boolean headerVisible = false;
     private boolean autoValidate = true;
     private boolean showValidationState = false;
     private boolean inputBarVisible = true;
+    private boolean editable = true;
     private Color inputBarColor = new Color(153, 153, 153);
     private boolean updatingText;
     private Font textFont = new Font("Segoe UI", 0, 13);
@@ -146,6 +148,7 @@ public class ShInput extends BaseContainer implements Inputable {
                 cardLayout.show(editorHost, CARD_TEXT);
         }
         setText(current);
+        applyEditableState();
         revalidate();
         repaint();
     }
@@ -409,15 +412,13 @@ public class ShInput extends BaseContainer implements Inputable {
 
     @Override
     public void setEditable(boolean editable) {
-        textField.setEditable(editable);
-        passwordField.setEditable(editable);
-        textArea.setEditable(editable);
-        dateField.setEditable(editable);
+        this.editable = editable;
+        applyEditableState();
     }
 
     @Override
     public boolean isEditable() {
-        return activeEditor().isEditable();
+        return editable;
     }
 
     @Override
@@ -465,6 +466,13 @@ public class ShInput extends BaseContainer implements Inputable {
             default ->
                 textField;
         };
+    }
+
+    private void applyEditableState() {
+        textField.setEditable(editable);
+        passwordField.setEditable(editable);
+        textArea.setEditable(editable);
+        dateField.setEditable(editable);
     }
 
     private void updateInputBarStyle() {
@@ -592,6 +600,21 @@ public class ShInput extends BaseContainer implements Inputable {
 
     public Font getTextFont() {
         return textFont;
+    }
+
+    public void setPlaceholderFont(Font placeholderFont) {
+        this.placeholderFont = placeholderFont;
+        
+        this.placeholder = placeholder != null ? placeholder : "";
+        textField.setFont(this.placeholderFont);
+        passwordField.setFont(this.placeholderFont);
+        textArea.setFont(this.placeholderFont);
+        dateField.setFont(this.placeholderFont);
+        repaint();
+    }
+
+    public Font getPlaceholderFont() {
+        return placeholderFont;
     }
 
 }
