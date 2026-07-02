@@ -483,4 +483,24 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
             paginationDelegate.reset();
         }
     }
+
+    /**
+     *
+     * @param columnIndex indice de la columna
+     * @return retorn ael valor de la primera fila
+     */
+    @Override
+    public String getValue_FR(int columnIndex) {
+        return selectionDelegate.getValue_FR(columnIndex);
+    }
+
+    /**
+     *
+     * @param columnIndex indice de la columna
+     * @return retorn ael valor de la ultima fila
+     */
+    @Override
+    public String getValue_LR(int columnIndex) {
+        return selectionDelegate.getValue_LR(columnIndex);
+    }
 }

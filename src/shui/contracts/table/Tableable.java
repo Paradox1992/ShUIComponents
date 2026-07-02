@@ -39,6 +39,10 @@ public interface Tableable<T> {
 
     String getValue(int columnIndex);
 
+    String getValue_FR(int columnIndex);
+
+    String getValue_LR(int columnIndex);
+
     Object[] buildRow(int... indexes);
 
     boolean isRowSelected();

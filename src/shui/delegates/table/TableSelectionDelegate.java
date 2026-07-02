@@ -4,6 +4,8 @@ import javax.swing.JTable;
 
 /**
  * Lectura de seleccion y valores visibles de la tabla.
+ *
+ * @param <T> tipo de dato
  */
 public class TableSelectionDelegate<T> {
 
@@ -56,5 +58,21 @@ public class TableSelectionDelegate<T> {
 
     public boolean isRowSelected() {
         return table.getSelectedRow() >= 0;
+    }
+
+    public String getValue_FR(int conlIndex) {
+        if (model == null) {
+            return null;
+        }
+
+        return model.getValueAt(conlIndex, conlIndex).toString();
+    }
+
+    public String getValue_LR(int conlIndex) {
+        if (model == null) {
+            return null;
+        }
+
+        return model.getValueAt(model.getRowCount() - 1, conlIndex).toString();
     }
 }
