@@ -1,5 +1,8 @@
 package shui.contracts.table;
 
+import com.requestsupport.interfaces.RowMapper;
+import com.requestsupport.responses.PaginatedApiResponse;
+import com.requestsupport.responses.PaginationMeta;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JScrollPane;
@@ -23,9 +26,9 @@ public interface Tableable<T> {
 
     void setData(List<T> data, RowMapper<? super T> mapper);
 
-    void setData(PagedTableData<T> pagedData, RowMapper<? super T> mapper);
+    void setData(PaginatedApiResponse<List<T>> pagedData, RowMapper<? super T> mapper);
 
-    void setTableData(List<T> data, RowMapper<? super T> mapper, PaginationInfo paginationInfo);
+    void setTableData(List<T> data, RowMapper<? super T> mapper, PaginationMeta paginationInfo);
 
     void appendTableData(List<T> data, RowMapper<? super T> mapper);
 

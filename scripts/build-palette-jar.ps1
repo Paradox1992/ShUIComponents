@@ -11,6 +11,13 @@ $classesDir = Join-Path $buildDir "classes"
 $distDir = Join-Path $projectRoot "dist"
 $sourcesFile = Join-Path $buildDir "sources.txt"
 $jarPath = Join-Path $distDir $JarName
+$classpathEntries = @(
+    "C:\Users\USER\Documents\NetBeansProjects\RequestSupport\dist\RequestSupport.jar",
+    "C:\Users\USER\Documents\libs_25\jackson 2.17\jackson-annotations-2.17.1.jar",
+    "C:\Users\USER\Documents\libs_25\jackson 2.17\jackson-core-2.17.1.jar",
+    "C:\Users\USER\Documents\libs_25\jackson 2.17\jackson-databind-2.17.1.jar",
+    "C:\Users\USER\Documents\libs_25\jackson 2.17\jackson-datatype-jsr310-2.17.1.jar"
+)
 
 New-Item -ItemType Directory -Force -Path $classesDir | Out-Null
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
@@ -26,7 +33,13 @@ Get-ChildItem -Path $srcDir -Recurse -File -Include *.java |
         ForEach-Object { $_.FullName } |
         Set-Content -Path $sourcesFile -Encoding ASCII
 
-javac --release 21 -encoding UTF-8 -d $classesDir "@$sourcesFile"
+$missingDependencies = $classpathEntries | Where-Object { -not (Test-Path -LiteralPath $_) }
+if ($missingDependencies) {
+    throw "Missing compile dependencies: $($missingDependencies -join ', ')"
+}
+
+$classpath = $classpathEntries -join [System.IO.Path]::PathSeparator
+javac --release 21 -encoding UTF-8 -classpath $classpath -d $classesDir "@$sourcesFile"
 
 Get-ChildItem -Path $srcDir -Recurse -File |
         Where-Object { $_.Extension -ne ".java" -and $_.Extension -ne ".form" } |

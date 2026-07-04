@@ -1,7 +1,7 @@
 package shui.delegates.table;
 
+import com.requestsupport.responses.PaginationMeta;
 import shui.contracts.table.PageRequestHandler;
-import shui.contracts.table.PaginationInfo;
 
 /**
  * Estado y navegacion de paginacion para ShTable.
@@ -9,19 +9,19 @@ import shui.contracts.table.PaginationInfo;
 public class TablePaginationDelegate {
 
     private PageRequestHandler handler;
-    private PaginationInfo info = new PaginationInfo();
+    private PaginationMeta info = defaultInfo();
     private boolean paged;
     private boolean showItemsCount = true;
 
     public void reset() {
-        info = new PaginationInfo(1, 1, 0);
+        info = defaultInfo();
     }
 
-    public void setInfo(PaginationInfo info) {
-        this.info = info != null ? info : new PaginationInfo(1, 1, 0);
+    public void setInfo(PaginationMeta info) {
+        this.info = info != null ? info : defaultInfo();
     }
 
-    public PaginationInfo getInfo() {
+    public PaginationMeta getInfo() {
         return info;
     }
 
@@ -77,5 +77,9 @@ public class TablePaginationDelegate {
 
     public void setShowItemsCount(boolean showItemsCount) {
         this.showItemsCount = showItemsCount;
+    }
+
+    private static PaginationMeta defaultInfo() {
+        return new PaginationMeta(0, 1, 1, "");
     }
 }

@@ -1,10 +1,10 @@
 package com.ShTables;
 
 import com.ShContainers.ShPanel;
+import com.requestsupport.interfaces.RowMapper;
+import com.requestsupport.responses.PaginatedApiResponse;
+import com.requestsupport.responses.PaginationMeta;
 import shui.contracts.table.PageRequestHandler;
-import shui.contracts.table.PagedTableData;
-import shui.contracts.table.PaginationInfo;
-import shui.contracts.table.RowMapper;
 import shui.contracts.table.TableColumnSpec;
 import shui.contracts.table.TableTheme;
 import shui.contracts.table.Tableable;
@@ -101,18 +101,18 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     }
 
     @Override
-    public void setData(PagedTableData<T> pagedData, RowMapper<? super T> mapper) {
+    public void setData(PaginatedApiResponse<List<T>> pagedData, RowMapper<? super T> mapper) {
         if (pagedData == null) {
             clearTable();
             paginationDelegate.reset();
             return;
         }
-        updatePaginationState(pagedData.getPaginationInfo());
-        model.setData(pagedData.getData(), mapper);
+        updatePaginationState(pagedData.getMeta());
+        model.setData(pagedData.getData() != null ? pagedData.getData() : List.of(), mapper);
     }
 
     @Override
-    public void setTableData(List<T> data, RowMapper<? super T> mapper, PaginationInfo paginationInfo) {
+    public void setTableData(List<T> data, RowMapper<? super T> mapper, PaginationMeta paginationInfo) {
         updatePaginationState(paginationInfo);
         model.setData(data, mapper);
     }
@@ -246,7 +246,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         return paginationDelegate.isShowItemsCount();
     }
 
-    public PaginationInfo getPaginationInfo() {
+    public PaginationMeta getPaginationInfo() {
         return paginationDelegate.getInfo();
     }
 
@@ -476,7 +476,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         repaint();
     }
 
-    private void updatePaginationState(PaginationInfo info) {
+    private void updatePaginationState(PaginationMeta info) {
         if (info != null) {
             paginationDelegate.setInfo(info);
         } else {

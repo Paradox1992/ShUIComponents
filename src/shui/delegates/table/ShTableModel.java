@@ -1,6 +1,6 @@
 package shui.delegates.table;
 
-import shui.contracts.table.RowMapper;
+import com.requestsupport.interfaces.RowMapper;
 import shui.contracts.table.TableColumnSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
