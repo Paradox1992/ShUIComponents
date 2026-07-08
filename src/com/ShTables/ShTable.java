@@ -467,6 +467,15 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         return styleDelegate.isShowVerticalLines();
     }
 
+    public void setCenterContentColumns(int... indexCols) {
+        styleDelegate.setCenterContentColumns(indexCols);
+        refreshStyle();
+    }
+
+    public int[] getCenterContentColumns() {
+        return styleDelegate.getCenterContentColumns();
+    }
+
     private void refreshStyle() {
         styleDelegate.apply(table, scrollPane);
         if (customRenderer != null) {

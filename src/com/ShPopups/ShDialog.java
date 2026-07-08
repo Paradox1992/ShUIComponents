@@ -2,7 +2,6 @@ package com.ShPopups;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.MouseInfo;
 import javax.swing.JDialog;
 
 import static shui.config.colors.BaseContainerColors.EMPTY_BG;

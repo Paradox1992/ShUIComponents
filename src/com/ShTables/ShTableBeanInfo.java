@@ -14,7 +14,7 @@ public class ShTableBeanInfo extends ShBeanInfoSupport {
                     "contentFont", "tableBackground", "cellForeground",
                     "selectionBackground", "selectionForeground", "gridColor",
                     "alternateRowBackground", "tableRowHeight",
-                    "showHorizontalLines", "showVerticalLines"
+                    "showHorizontalLines", "showVerticalLines", "centerContentColumns"
                 },
                 "context", "menu", "scroll", "table", "onTableClick");
     }

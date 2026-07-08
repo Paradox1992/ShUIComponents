@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.util.Arrays;
 import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -42,6 +43,7 @@ public class TableStyleDelegate {
     private boolean showVerticalLines;
     private boolean stripedRows;
     private TableTheme tableTheme = TableTheme.SHUI;
+    private int[] centerContentColumns = new int[0];
     private final TableCellRenderer headerRenderer = createHeaderRenderer();
     private final TableCellRenderer cellRenderer = createCellRenderer();
 
@@ -82,7 +84,7 @@ public class TableStyleDelegate {
 
     public void setRenderer(JTable table, TableCellRenderer renderer) {
         if (table != null && renderer != null) {
-            table.setDefaultRenderer(Object.class, renderer);
+            table.setDefaultRenderer(Object.class, createAlignedRenderer(renderer));
         }
     }
 
@@ -261,6 +263,14 @@ public class TableStyleDelegate {
         this.stripedRows = stripedRows;
     }
 
+    public void setCenterContentColumns(int... indexCols) {
+        centerContentColumns = indexCols != null ? indexCols.clone() : new int[0];
+    }
+
+    public int[] getCenterContentColumns() {
+        return centerContentColumns.clone();
+    }
+
     private TableCellRenderer createHeaderRenderer() {
         return new DefaultTableCellRenderer() {
             private static final long serialVersionUID = -1175987752418532255L;
@@ -306,9 +316,36 @@ public class TableStyleDelegate {
                 if (contentFont != null) {
                     component.setFont(contentFont);
                 }
+                applyContentAlignment(table, component, column);
                 return component;
             }
         };
+    }
+
+    private TableCellRenderer createAlignedRenderer(TableCellRenderer renderer) {
+        return (table, value, isSelected, hasFocus, row, column) -> {
+            Component component = renderer.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column);
+            applyContentAlignment(table, component, column);
+            return component;
+        };
+    }
+
+    private void applyContentAlignment(JTable table, Component component, int viewColumn) {
+        if (component instanceof JLabel label) {
+            label.setHorizontalAlignment(isCenteredColumn(table, viewColumn)
+                    ? SwingConstants.CENTER
+                    : SwingConstants.LEFT);
+        }
+    }
+
+    private boolean isCenteredColumn(JTable table, int viewColumn) {
+        if (centerContentColumns.length == 0) {
+            return false;
+        }
+        int modelColumn = table != null ? table.convertColumnIndexToModel(viewColumn) : viewColumn;
+        return Arrays.stream(centerContentColumns)
+                .anyMatch(index -> index == -1 || index == modelColumn);
     }
 
     private static class ModernScrollBarUI extends BasicScrollBarUI {

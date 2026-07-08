@@ -15,6 +15,7 @@ public class ShDialogHeader extends ShPanel {
     
     public ShDialogHeader() {
         initComponents();
+        shButton1.setCustomColor(new Color(255, 255, 255, 0));
     }
     
     @SuppressWarnings("unchecked")
@@ -32,9 +33,10 @@ public class ShDialogHeader extends ShPanel {
         lbl_shdilog_title.setText("Title");
 
         shButton1.setCustomColor(new java.awt.Color(255, 255, 255));
-        shButton1.setImage(new javax.swing.ImageIcon(getClass().getResource("/shui/assets/cerrar.png"))); // NOI18N
-        shButton1.setImageScale(shui.contracts.visual.Imageable.ImageScale.CENTER);
+        shButton1.setIconSize(shui.contracts.button.Buttonable.ButtonIconSize.X32);
         shButton1.setText("");
+        shButton1.setImage(new javax.swing.ImageIcon(getClass().getResource("/shui/assets/cerrar_32.png"))); // NOI18N
+        shButton1.setImageScale(shui.contracts.visual.Imageable.ImageScale.CENTER);
         shButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 shButton1ActionPerformed(evt);
@@ -47,14 +49,14 @@ public class ShDialogHeader extends ShPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lbl_shdilog_title, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
+                .addComponent(lbl_shdilog_title, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(shButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(shButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lbl_shdilog_title, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 30, Short.MAX_VALUE)
+            .addComponent(lbl_shdilog_title, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 38, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(shButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
