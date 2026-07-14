@@ -12,7 +12,12 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -23,6 +28,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -57,6 +63,8 @@ public class ShInput extends BaseContainer implements Inputable {
     private boolean showValidationState = false;
     private boolean inputBarVisible = true;
     private boolean editable = true;
+    private boolean allowCopy = false;
+    private boolean allowPaste = false;
     private Color inputBarColor = new Color(153, 153, 153);
     private boolean updatingText;
     private Font textFont = new Font("Segoe UI", 0, 13);
@@ -124,6 +132,7 @@ public class ShInput extends BaseContainer implements Inputable {
             }
         });
         filterDelegate.install(component);
+        installClipboardActions(component);
     }
 
     private void textChanged() {
@@ -379,6 +388,17 @@ public class ShInput extends BaseContainer implements Inputable {
     }
 
     @Override
+    public void setDecimalPlaces(int decimalPlaces) {
+        filterDelegate.setDecimalPlaces(decimalPlaces);
+        setText(getText());
+    }
+
+    @Override
+    public int getDecimalPlaces() {
+        return filterDelegate.getDecimalPlaces();
+    }
+
+    @Override
     public void setAllowNegative(boolean allowNegative) {
         filterDelegate.setAllowNegative(allowNegative);
         setText(getText());
@@ -387,6 +407,26 @@ public class ShInput extends BaseContainer implements Inputable {
     @Override
     public boolean isAllowNegative() {
         return filterDelegate.isAllowNegative();
+    }
+
+    @Override
+    public void setAllowCopy(boolean allowCopy) {
+        this.allowCopy = allowCopy;
+    }
+
+    @Override
+    public boolean isAllowCopy() {
+        return allowCopy;
+    }
+
+    @Override
+    public void setAllowPaste(boolean allowPaste) {
+        this.allowPaste = allowPaste;
+    }
+
+    @Override
+    public boolean isAllowPaste() {
+        return allowPaste;
     }
 
     @Override
@@ -408,6 +448,23 @@ public class ShInput extends BaseContainer implements Inputable {
     @Override
     public LocalDate getDateValue() {
         return validationDelegate.parseDate(getText());
+    }
+
+    @Override
+    public Number getDigit() {
+        String value = getText();
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.equals("-") || normalized.equals(".") || normalized.equals("-.")) {
+            return null;
+        }
+        try {
+            return new BigDecimal(normalized);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -473,6 +530,59 @@ public class ShInput extends BaseContainer implements Inputable {
         passwordField.setEditable(editable);
         textArea.setEditable(editable);
         dateField.setEditable(editable);
+    }
+
+    private void installClipboardActions(JTextComponent component) {
+        component.getActionMap().put(DefaultEditorKit.copyAction, new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                copyFrom(component);
+            }
+        });
+        component.getActionMap().put(DefaultEditorKit.cutAction, new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (allowCopy && editable && component.isEditable()) {
+                    copyFrom(component);
+                    component.replaceSelection("");
+                }
+            }
+        });
+        component.getActionMap().put(DefaultEditorKit.pasteAction, new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                pasteInto(component);
+            }
+        });
+    }
+
+    private void copyFrom(JTextComponent component) {
+        if (!allowCopy) {
+            return;
+        }
+        String selected = component.getSelectedText();
+        if (selected != null && !selected.isEmpty()) {
+            Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new StringSelection(selected), null);
+        }
+    }
+
+    private void pasteInto(JTextComponent component) {
+        if (!allowPaste || !editable || !component.isEditable() || !component.isEnabled()) {
+            return;
+        }
+        try {
+            Object value = Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .getData(DataFlavor.stringFlavor);
+            if (value instanceof String text) {
+                component.replaceSelection(text);
+                if (autoValidate) {
+                    isValidInput();
+                }
+            }
+        } catch (Exception ex) {
+            Toolkit.getDefaultToolkit().beep();
+        }
     }
 
     private void updateInputBarStyle() {

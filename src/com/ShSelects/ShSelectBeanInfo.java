@@ -8,11 +8,11 @@ public class ShSelectBeanInfo extends ShBeanInfoSupport {
         super(ShSelect.class, "ShSelect", "Selector Shui desacoplado de JComboBox con header.",
                 "/shui/assets/shselect.png",
                 new String[]{
-                    "placeholder", "selectedIndex", "buttonColor", "selectBackgroundColor",
+                    "model", "placeholder", "selectedIndex", "buttonColor", "selectBackgroundColor",
                     "selectForegroundColor", "selectionBackgroundColor", "selectionForegroundColor",
                     "popupBackgroundColor", "popupBorderVisible", "iconSize", "maximumRowCount",
                     "headerText", "headerPosition", "headerVisible", "headerForeground", "headerFont"
                 },
-                "context", "data", "selectedValue");
+                "context", "data", "items", "selectedValue");
     }
 }

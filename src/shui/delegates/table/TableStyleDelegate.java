@@ -332,7 +332,7 @@ public class TableStyleDelegate {
     }
 
     private void applyContentAlignment(JTable table, Component component, int viewColumn) {
-        if (component instanceof JLabel label) {
+        if (component instanceof JLabel label && centerContentColumns.length > 0) {
             label.setHorizontalAlignment(isCenteredColumn(table, viewColumn)
                     ? SwingConstants.CENTER
                     : SwingConstants.LEFT);

@@ -99,15 +99,29 @@ public interface Inputable {
 
     boolean isAllowDecimal();
 
+    void setDecimalPlaces(int decimalPlaces);
+
+    int getDecimalPlaces();
+
     void setAllowNegative(boolean allowNegative);
 
     boolean isAllowNegative();
+
+    void setAllowCopy(boolean allowCopy);
+
+    boolean isAllowCopy();
+
+    void setAllowPaste(boolean allowPaste);
+
+    boolean isAllowPaste();
 
     void setDatePattern(String pattern);
 
     String getDatePattern();
 
     LocalDate getDateValue();
+
+    Number getDigit();
 
     void setEditable(boolean editable);
 

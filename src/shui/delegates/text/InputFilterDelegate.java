@@ -17,6 +17,7 @@ public class InputFilterDelegate {
     private InputDataType dataType = InputDataType.ANY;
     private boolean allowDecimal;
     private boolean allowNegative;
+    private int decimalPlaces;
 
     public void install(JTextComponent component) {
         if (component == null) {
@@ -50,6 +51,14 @@ public class InputFilterDelegate {
 
     public boolean isAllowDecimal() {
         return allowDecimal;
+    }
+
+    public void setDecimalPlaces(int decimalPlaces) {
+        this.decimalPlaces = Math.max(0, decimalPlaces);
+    }
+
+    public int getDecimalPlaces() {
+        return decimalPlaces;
     }
 
     public void setAllowNegative(boolean allowNegative) {
@@ -88,12 +97,23 @@ public class InputFilterDelegate {
 
     private boolean acceptNumeric(char c, String current, int offset) {
         if (Character.isDigit(c)) {
-            return true;
+            return canAcceptNumericDigit(current);
         }
         if (allowDecimal && c == '.' && !current.contains(".")) {
             return true;
         }
         return allowNegative && c == '-' && offset == 0 && !current.startsWith("-");
+    }
+
+    private boolean canAcceptNumericDigit(String current) {
+        if (!allowDecimal || decimalPlaces == 0) {
+            return true;
+        }
+        int decimalIndex = current.indexOf('.');
+        if (decimalIndex < 0) {
+            return true;
+        }
+        return current.length() - decimalIndex - 1 < decimalPlaces;
     }
 
     private class Filter extends DocumentFilter {

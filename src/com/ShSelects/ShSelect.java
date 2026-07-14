@@ -4,7 +4,6 @@ import shui.components.base.BaseContainer;
 import static shui.config.colors.BaseContainerColors.EMPTY_BG;
 import shui.contracts.select.Selectable;
 import shui.contracts.visual.VisualState;
-import shui.delegates.select.SelectDataDelegate;
 import shui.delegates.select.SelectUIDelegate;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -14,27 +13,35 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.BorderFactory;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.MutableComboBoxModel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 /**
@@ -44,7 +51,6 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
  */
 public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
 
-    private final SelectDataDelegate<E> dataDelegate = new SelectDataDelegate<>();
     private final SelectUIDelegate uiDelegate = new SelectUIDelegate();
     private final EventListenerList listeners = new EventListenerList();
     private final JLabel valueLabel = new JLabel();
@@ -52,9 +58,25 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     private final JLabel headerLabel = new JLabel();
     private final JPanel fieldPanel = new JPanel(new BorderLayout());
     private final JPopupMenu popup = new JPopupMenu();
-    private final DefaultListModel<E> listModel = new DefaultListModel<>();
-    private final JList<E> list = new JList<>(listModel);
+    private ComboBoxModel<E> model = new DefaultComboBoxModel<>();
+    private final JList<E> list = new JList<>(model);
     private final JScrollPane scrollPane = new JScrollPane(list);
+    private final ListDataListener modelListener = new ListDataListener() {
+        @Override
+        public void intervalAdded(ListDataEvent e) {
+            modelChanged();
+        }
+
+        @Override
+        public void intervalRemoved(ListDataEvent e) {
+            modelChanged();
+        }
+
+        @Override
+        public void contentsChanged(ListDataEvent e) {
+            modelChanged();
+        }
+    };
 
     private String headerText = "";
     private HeaderPosition headerPosition = HeaderPosition.TOP_LEFT;
@@ -85,6 +107,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         configureArrowLabel();
         configureList();
         configurePopup();
+        model.addListDataListener(modelListener);
         installMouseHandler();
         updateHeaderLayout();
         refreshDisplay();
@@ -149,6 +172,8 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
 
     private void configurePopup() {
         popup.setBorder(BorderFactory.createEmptyBorder());
+        popup.setLightWeightPopupEnabled(false);
+        popup.setFocusable(false);
         popup.add(scrollPane);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         JScrollBar bar = scrollPane.getVerticalScrollBar();
@@ -160,39 +185,98 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         MouseAdapter adapter = new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (isEnabled() && contains(e.getPoint())) {
+                if (isEnabled() && isClickInsideSelect(e)) {
+                    requestFocusInWindow();
                     togglePopup();
                 }
             }
         };
         addMouseListener(adapter);
+        fieldPanel.addMouseListener(adapter);
         valueLabel.addMouseListener(adapter);
         arrowLabel.addMouseListener(adapter);
+        headerLabel.addMouseListener(adapter);
     }
 
     @Override
     public void setData(List<E> items) {
-        dataDelegate.setData(items);
-        rebuildListModel();
-        refreshDisplay();
+        DefaultComboBoxModel<E> nextModel = new DefaultComboBoxModel<>();
+        if (items != null) {
+            for (E item : items) {
+                nextModel.addElement(item);
+            }
+        }
+        nextModel.setSelectedItem(null);
+        setModel(nextModel);
     }
 
     @Override
     public List<E> getData() {
-        return dataDelegate.getData();
+        List<E> items = new ArrayList<>();
+        for (int i = 0; i < model.getSize(); i++) {
+            items.add(model.getElementAt(i));
+        }
+        return List.copyOf(items);
+    }
+
+    public void setModel(ComboBoxModel<E> model) {
+        ComboBoxModel<E> nextModel = model != null ? model : new DefaultComboBoxModel<>();
+        this.model.removeListDataListener(modelListener);
+        this.model = nextModel;
+        this.model.addListDataListener(modelListener);
+        list.setModel(this.model);
+        list.setSelectedIndex(getSelectedIndex());
+        refreshDisplay();
+    }
+
+    public ComboBoxModel<E> getModel() {
+        return model;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void setItems(String items) {
+        if (items == null || items.isBlank()) {
+            setData(null);
+            return;
+        }
+
+        DefaultComboBoxModel<E> model = new DefaultComboBoxModel<>();
+        for (String item : items.split(",")) {
+            String value = item.trim();
+            if (!value.isEmpty()) {
+                model.addElement((E) value);
+            }
+        }
+        setModel(model);
+    }
+
+    public String getItems() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < model.getSize(); i++) {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(String.valueOf(model.getElementAt(i)));
+        }
+        return builder.toString();
     }
 
     @Override
     public void setSelectedValue(E value) {
-        dataDelegate.setSelectedValue(value);
-        list.setSelectedIndex(dataDelegate.getSelectedIndex());
+        Object old = model.getSelectedItem();
+        model.setSelectedItem(value);
+        list.setSelectedIndex(getSelectedIndex());
         refreshDisplay();
-        fireActionEvent();
+        if (!Objects.equals(old, value)) {
+            fireActionEvent();
+        }
     }
 
     @Override
     public E getSelectedValue() {
-        return dataDelegate.getSelectedValue();
+        @SuppressWarnings("unchecked")
+        E selected = (E) model.getSelectedItem();
+        return selected;
     }
 
     public E getSelectedItem() {
@@ -200,21 +284,17 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     }
 
     public void setSelectedIndex(int index) {
-        dataDelegate.setSelectedIndex(index);
-        list.setSelectedIndex(dataDelegate.getSelectedIndex());
-        refreshDisplay();
-        fireActionEvent();
+        E value = index >= 0 && index < model.getSize() ? model.getElementAt(index) : null;
+        setSelectedValue(value);
     }
 
     public int getSelectedIndex() {
-        return dataDelegate.getSelectedIndex();
+        return indexOf(model.getSelectedItem());
     }
 
     @Override
     public void clearSelection() {
-        dataDelegate.clearSelection();
-        list.clearSelection();
-        refreshDisplay();
+        setSelectedValue(null);
     }
 
     @Override
@@ -408,6 +488,8 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         }
         updatePopupSize();
         refreshPopupStyle();
+        popup.revalidate();
+        popup.pack();
         popup.show(this, 0, getHeight());
     }
 
@@ -427,22 +509,15 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         }
     }
 
-    private void rebuildListModel() {
-        listModel.clear();
-        for (E item : dataDelegate.getData()) {
-            listModel.addElement(item);
-        }
-    }
-
     private void refreshDisplay() {
         setBackgroundColor(uiDelegate.getBackgroundColor());
-        valueLabel.setForeground(dataDelegate.getSelectedValue() == null
+        valueLabel.setForeground(model.getSelectedItem() == null
                 ? new Color(130, 130, 130)
                 : uiDelegate.getForegroundColor());
         arrowLabel.setForeground(uiDelegate.getButtonColor());
         arrowLabel.setFont(arrowLabel.getFont().deriveFont((float) uiDelegate.getIconSize()));
 
-        E selected = dataDelegate.getSelectedValue();
+        Object selected = model.getSelectedItem();
         if (selected != null) {
             valueLabel.setText(String.valueOf(selected));
         } else {
@@ -464,9 +539,83 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     }
 
     private void updatePopupSize() {
-        int rows = Math.min(Math.max(1, listModel.size()), maximumRowCount);
+        int rows = Math.min(Math.max(1, model.getSize()), maximumRowCount);
         int height = rows * list.getFixedCellHeight();
-        scrollPane.setPreferredSize(new Dimension(Math.max(getWidth(), 120), height));
+        int width = Math.max(Math.max(getWidth(), getPreferredSize().width), 120);
+        list.setVisibleRowCount(rows);
+        scrollPane.setPreferredSize(new Dimension(width, height));
+    }
+
+    private void modelChanged() {
+        list.setSelectedIndex(getSelectedIndex());
+        refreshDisplay();
+        updatePopupSize();
+    }
+
+    private int indexOf(Object value) {
+        for (int i = 0; i < model.getSize(); i++) {
+            if (Objects.equals(model.getElementAt(i), value)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public void addItem(E item) {
+        mutableModel().addElement(item);
+    }
+
+    public void insertItemAt(E item, int index) {
+        mutableModel().insertElementAt(item, Math.max(0, Math.min(index, model.getSize())));
+    }
+
+    public void removeItem(Object item) {
+        mutableModel().removeElement(item);
+    }
+
+    public void removeItemAt(int index) {
+        if (index >= 0 && index < model.getSize()) {
+            mutableModel().removeElementAt(index);
+        }
+    }
+
+    public void removeAllItems() {
+        MutableComboBoxModel<E> mutable = mutableModel();
+        while (model.getSize() > 0) {
+            mutable.removeElementAt(0);
+        }
+    }
+
+    public int getItemCount() {
+        return model.getSize();
+    }
+
+    public E getItemAt(int index) {
+        return index >= 0 && index < model.getSize() ? model.getElementAt(index) : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private MutableComboBoxModel<E> mutableModel() {
+        if (model instanceof MutableComboBoxModel<?> mutable) {
+            return (MutableComboBoxModel<E>) mutable;
+        }
+
+        DefaultComboBoxModel<E> mutable = new DefaultComboBoxModel<>();
+        for (int i = 0; i < model.getSize(); i++) {
+            mutable.addElement(model.getElementAt(i));
+        }
+        mutable.setSelectedItem(model.getSelectedItem());
+        setModel(mutable);
+        return mutable;
+    }
+
+    private boolean isClickInsideSelect(MouseEvent event) {
+        Component source = event.getComponent();
+        if (source == this) {
+            return contains(event.getPoint());
+        }
+        Point point = SwingUtilities.convertPoint(source, event.getPoint(), this);
+        return contains(point);
     }
 
     private void updateHeaderLayout() {

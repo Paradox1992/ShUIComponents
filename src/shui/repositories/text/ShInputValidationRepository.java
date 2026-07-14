@@ -1,5 +1,6 @@
 package shui.repositories.text;
 
+import com.ShDateSelectors.ShDateSelector;
 import com.ShContainers.ShPanel;
 import com.ShInputs.ShInput;
 import java.awt.Component;
@@ -20,8 +21,11 @@ final class ShInputValidationRepository implements ShInputValidator {
         
         boolean[] validForm = {true};
         Set<Component> excluded = excludedSet(exclude);
-        visitInputs(panel, excluded, input -> {
-            if (!validateAndApplyState(input)) {
+        visitFields(panel, excluded, field -> {
+            if (field instanceof ShInput input && !validateAndApplyState(input)) {
+                validForm[0] = false;
+            } else if (field instanceof ShDateSelector dateSelector
+                    && !validateAndApplyState(dateSelector)) {
                 validForm[0] = false;
             }
         });
@@ -34,17 +38,22 @@ final class ShInputValidationRepository implements ShInputValidator {
             return;
         }
         
-        visitInputs(panel, Collections.emptySet(), this::clearInput);
+        visitFields(panel, Collections.emptySet(), field -> {
+            if (field instanceof ShInput input) {
+                clearInput(input);
+            }
+        });
     }
     
-    private void visitInputs(Container container, Set<Component> excluded, ShInputVisitor visitor) {
+    private void visitFields(Container container, Set<Component> excluded, FormFieldVisitor visitor) {
         for (Component component : container.getComponents()) {
-            if (component instanceof ShInput input && !excluded.contains(input)) {
-                visitor.visit(input);
+            if ((component instanceof ShInput || component instanceof ShDateSelector)
+                    && !excluded.contains(component)) {
+                visitor.visit(component);
             }
             
             if (component instanceof Container child) {
-                visitInputs(child, excluded, visitor);
+                visitFields(child, excluded, visitor);
             }
         }
     }
@@ -58,6 +67,12 @@ final class ShInputValidationRepository implements ShInputValidator {
     private boolean validateAndApplyState(ShInput input) {
         boolean valid = input.isValidInput();
         input.setVisualState(valid ? VisualState.NONE : VisualState.ERROR);
+        return valid;
+    }
+
+    private boolean validateAndApplyState(ShDateSelector dateSelector) {
+        boolean valid = dateSelector.validateDate();
+        dateSelector.setVisualState(valid ? VisualState.NONE : VisualState.ERROR);
         return valid;
     }
     
@@ -75,8 +90,8 @@ final class ShInputValidationRepository implements ShInputValidator {
         return excluded;
     }
     
-    private interface ShInputVisitor {
+    private interface FormFieldVisitor {
         
-        void visit(ShInput input);
+        void visit(Component component);
     }
 }

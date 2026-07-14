@@ -12,7 +12,8 @@ public class ShInputBeanInfo extends ShBeanInfoSupport {
                     "headerText", "headerPosition", "headerVisible", "headerForeground", "headerFont",
                     "inputBarVisible", "inputBarColor",
                     "maxLength", "minLength", "required", "regex", "autoValidate",
-                    "showValidationState", "allowDecimal", "allowNegative", "datePattern", "editable"
+                    "showValidationState", "allowDecimal", "decimalPlaces", "allowNegative", "allowCopy", "allowPaste",
+                    "datePattern", "editable"
                 },
                 "context");
     }
