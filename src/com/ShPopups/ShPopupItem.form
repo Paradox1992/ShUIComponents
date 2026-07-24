@@ -20,9 +20,10 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="lbl_icon" min="-2" pref="31" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="lbl_description" pref="71" max="32767" attributes="0"/>
+              <Component id="lbl_icon" min="-2" pref="25" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="lbl_description" pref="85" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lbl_iconSub" min="-2" pref="12" max="-2" attributes="0"/>
           </Group>

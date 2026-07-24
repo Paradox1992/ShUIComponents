@@ -9,12 +9,14 @@ public class ShTableBeanInfo extends ShBeanInfoSupport {
                 "/shui/assets/shtable.png",
                 new String[]{
                     "tableTheme", "bootstrapTheme", "stripedRows", "tableHeaders",
+                    "paged", "pagedMode", "pageHandler",
                     "searchBoxVisible", "searchPlaceholder", "filterColumn",
                     "headerBackground", "headerForeground", "headerFont",
                     "contentFont", "tableBackground", "cellForeground",
                     "selectionBackground", "selectionForeground", "gridColor",
                     "alternateRowBackground", "tableRowHeight",
-                    "showHorizontalLines", "showVerticalLines", "centerContentColumns"
+                    "showHorizontalLines", "showVerticalLines", "centerContentColumns",
+                    "popupMenu"
                 },
                 "context", "menu", "scroll", "table", "onTableClick");
     }

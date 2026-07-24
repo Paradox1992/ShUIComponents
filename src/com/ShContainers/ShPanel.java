@@ -19,6 +19,7 @@ import java.awt.image.ConvolveOp;
 import java.awt.image.Kernel;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.util.Arrays;
+import java.util.Objects;
 import shui.components.base.BaseContainer;
 import static shui.config.colors.BaseContainerColors.EMPTY_BG;
 import shui.contracts.text.ShInputFormable;
@@ -37,7 +38,7 @@ import shui.repositories.text.ShInputValidationRepositories;
  * capacidades visuales y de seguridad sin necesidad de código adicional
  * .</p>
  */
-public class ShPanel extends BaseContainer implements ShInputFormable {
+public class ShPanel extends BaseContainer implements ShInputFormable, FormMode {
 
     public enum ShPanelStyle {
         DEFAULT,
@@ -50,6 +51,7 @@ public class ShPanel extends BaseContainer implements ShInputFormable {
     private static final int BLURR_BACKDROP_RADIUS = 4;
 
     private ShPanelStyle panelStyle = ShPanelStyle.DEFAULT;
+    private Mode formMode = Mode.CREATE;
     private boolean paintingBackdropSnapshot;
 
     // ── Constructores ────────────────────────────────────────────────────────
@@ -69,6 +71,43 @@ public class ShPanel extends BaseContainer implements ShInputFormable {
 
     public ShPanelStyle getPanelStyle() {
         return panelStyle;
+    }
+
+    /**
+     * Establece si el panel trabaja como formulario de creacion o actualizacion.
+     *
+     * @param mode modo que debe usar el formulario
+     */
+    @Override
+    public void setFormMode(Mode mode) {
+        this.formMode = Objects.requireNonNull(
+                mode,
+                "El modo del formulario no puede ser null"
+        );
+    }
+
+    /**
+     * Obtiene el modo actual del formulario.
+     *
+     * @return modo actual del formulario
+     */
+    @Override
+    public Mode getFormMode() {
+        return formMode;
+    }
+
+    /**
+     * Cambia el formulario a modo creacion.
+     */
+    public void createMode() {
+        setFormMode(Mode.CREATE);
+    }
+
+    /**
+     * Cambia el formulario a modo actualizacion.
+     */
+    public void updateMode() {
+        setFormMode(Mode.UPDATE);
     }
 
     @Override

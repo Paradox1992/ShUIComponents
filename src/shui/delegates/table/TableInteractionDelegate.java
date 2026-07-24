@@ -1,8 +1,8 @@
 package shui.delegates.table;
 
-import java.awt.MouseInfo;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import com.ShPopups.ShPopupMenu;
 import javax.swing.JDialog;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -13,14 +13,15 @@ import javax.swing.SwingUtilities;
 public class TableInteractionDelegate {
 
     private JDialog menu;
+    private ShPopupMenu popupMenu;
     private Runnable onTableClick;
 
     public void install(JTable table) {
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
-                if (menu != null && SwingUtilities.isRightMouseButton(event)) {
-                    showMenu();
+                if (SwingUtilities.isRightMouseButton(event)) {
+                    showContextMenu(table, event);
                 }
                 if (onTableClick != null) {
                     onTableClick.run();
@@ -31,10 +32,20 @@ public class TableInteractionDelegate {
 
     public void setMenu(JDialog menu) {
         this.menu = menu;
+        this.popupMenu = menu instanceof ShPopupMenu shPopupMenu ? shPopupMenu : null;
     }
 
     public JDialog getMenu() {
         return menu;
+    }
+
+    public void setPopupMenu(ShPopupMenu popupMenu) {
+        this.popupMenu = popupMenu;
+        this.menu = popupMenu;
+    }
+
+    public ShPopupMenu getPopupMenu() {
+        return popupMenu;
     }
 
     public void setOnTableClick(Runnable onTableClick) {
@@ -45,8 +56,17 @@ public class TableInteractionDelegate {
         return onTableClick;
     }
 
-    private void showMenu() {
-        menu.setLocation(MouseInfo.getPointerInfo().getLocation());
+    private void showContextMenu(JTable table, MouseEvent event) {
+        if (menu == null || table.getRowCount() == 0) {
+            return;
+        }
+
+        int row = table.rowAtPoint(event.getPoint());
+        if (row >= 0) {
+            table.setRowSelectionInterval(row, row);
+        }
+
+        menu.setLocation(event.getLocationOnScreen());
         menu.setVisible(true);
     }
 }

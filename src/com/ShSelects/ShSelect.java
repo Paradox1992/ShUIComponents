@@ -2,6 +2,7 @@ package com.ShSelects;
 
 import shui.components.base.BaseContainer;
 import static shui.config.colors.BaseContainerColors.EMPTY_BG;
+import shui.contracts.select.SelectChangeHandler;
 import shui.contracts.select.Selectable;
 import shui.contracts.visual.VisualState;
 import shui.delegates.select.SelectUIDelegate;
@@ -82,6 +83,9 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     private HeaderPosition headerPosition = HeaderPosition.TOP_LEFT;
     private boolean headerVisible = true;
     private int maximumRowCount = 8;
+    private Font contentFont = new Font("Segoe UI", Font.PLAIN, 13);
+    private Runnable onChange;
+    private SelectChangeHandler<E> onchangeHandler;
 
     public ShSelect() {
         super(8, EMPTY_BG);
@@ -99,7 +103,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         setFocusable(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         setBorderEnabled(false);
-        setVisualState(VisualState.DEFAULT);
+        setVisualState(VisualState.NONE);
 
         configureHeader();
         configureFieldPanel();
@@ -130,6 +134,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         valueLabel.setOpaque(false);
         valueLabel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 8));
         valueLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        valueLabel.setFont(contentFont);
     }
 
     private void configureArrowLabel() {
@@ -142,6 +147,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setFixedCellHeight(28);
         list.setBorder(BorderFactory.createEmptyBorder());
+        list.setFont(contentFont);
         list.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
@@ -206,7 +212,11 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
                 nextModel.addElement(item);
             }
         }
-        nextModel.setSelectedItem(null);
+        if (nextModel.getSize() > 0) {
+            nextModel.setSelectedItem(nextModel.getElementAt(0));
+        } else {
+            nextModel.setSelectedItem(null);
+        }
         setModel(nextModel);
     }
 
@@ -470,6 +480,43 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         return headerLabel.getFont();
     }
 
+    @Override
+    public void setContentFont(Font font) {
+        if (font == null) {
+            return;
+        }
+        this.contentFont = font;
+        valueLabel.setFont(this.contentFont);
+        list.setFont(this.contentFont);
+        revalidate();
+        repaint();
+    }
+
+    @Override
+    public Font getContentFont() {
+        return contentFont;
+    }
+
+    @Override
+    public void setOnChange(Runnable onChange) {
+        this.onChange = onChange;
+    }
+
+    @Override
+    public Runnable getOnChange() {
+        return onChange;
+    }
+
+    @Override
+    public void setOnchangeHandler(SelectChangeHandler<E> onchangeHandler) {
+        this.onchangeHandler = onchangeHandler;
+    }
+
+    @Override
+    public SelectChangeHandler<E> getOnchangeHandler() {
+        return onchangeHandler;
+    }
+
     public void addActionListener(ActionListener listener) {
         listeners.add(ActionListener.class, listener);
     }
@@ -671,6 +718,12 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     }
 
     private void fireActionEvent() {
+        if (onchangeHandler != null) {
+            onchangeHandler.onChange(getSelectedValue());
+        }
+        if (onChange != null) {
+            onChange.run();
+        }
         ActionEvent event = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "selectionChanged");
         for (ActionListener listener : getActionListeners()) {
             listener.actionPerformed(event);

@@ -19,11 +19,11 @@ public final class ModelRender {
     private final RenderTarget target;
 
     public ModelRender(Object validator, Color background, int column) {
-        this(validator, null, background, null, column, RenderTarget.ROW);
+        this(validator, null, background, null, column, RenderTarget.CELL);
     }
 
     public ModelRender(Object validator, Color background, Color foreground, int column) {
-        this(validator, null, background, foreground, column, RenderTarget.ROW);
+        this(validator, null, background, foreground, column, RenderTarget.CELL);
     }
 
     public ModelRender(Object validator, Color background, int column, RenderTarget target) {
@@ -41,7 +41,7 @@ public final class ModelRender {
         this.background = background != null ? background : Color.WHITE;
         this.foreground = foreground;
         this.column = column;
-        this.target = target != null ? target : RenderTarget.ROW;
+        this.target = target != null ? target : RenderTarget.CELL;
     }
 
     public static ModelRender row(Object validator, Color background, int column) {
@@ -53,7 +53,7 @@ public final class ModelRender {
     }
 
     public static ModelRender when(int column, Predicate<Object> matcher, Color background) {
-        return when(column, matcher, background, null, RenderTarget.ROW);
+        return when(column, matcher, background, null, RenderTarget.CELL);
     }
 
     public static ModelRender when(int column, Predicate<Object> matcher, Color background,

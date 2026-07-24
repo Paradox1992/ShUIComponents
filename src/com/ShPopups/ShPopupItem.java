@@ -5,29 +5,44 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.Icon;
 import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
+import javax.swing.event.EventListenerList;
 import static shui.config.colors.BaseContainerColors.EMPTY_BG;
 
 public class ShPopupItem extends ShPanel {
 
-    private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.HAND_CURSOR);
+    private static final Cursor HAND_CURSOR = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 
+    private final EventListenerList actionListeners = new EventListenerList();
     private boolean root;
     private JDialog subMenu;
     private Runnable task;
     private Icon icon;
     private String title;
     private Font titleFont;
-    private Color enteredColor;
-    private Color exitedColor;
+    private Color enteredColor = new Color(235, 235, 235);
+    private Color exitedColor = EMPTY_BG;
 
     public ShPopupItem() {
         initComponents();
         setBackground(EMPTY_BG);
-        setCursor(DEFAULT_CURSOR);
+        setCursor(HAND_CURSOR);
         root = false;
-
+        title = lbl_description.getText();
+        titleFont = lbl_description.getFont();
+        installClickSupport();
+        setBottomLeftRounded(false);
+        setBottomRightRounded(false);
+        setTopLeftRounded(false);
+        setTopRightRounded(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -66,9 +81,10 @@ public class ShPopupItem extends ShPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(lbl_icon, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(lbl_icon, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lbl_description, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE)
+                .addComponent(lbl_description, javax.swing.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbl_iconSub, javax.swing.GroupLayout.PREFERRED_SIZE, 12, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -98,16 +114,7 @@ public class ShPopupItem extends ShPanel {
     }//GEN-LAST:event_shPanel1MouseEntered
 
     private void lbl_descriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_descriptionMouseClicked
-        if (isRoot()) {
-            if (getSubMenu() != null) {
-                getSubMenu().setLocation(MouseInfo.getPointerInfo().getLocation());
-                getSubMenu().setVisible(true);
-            }
-        } else {
-            if (task != null) {
-                task.run();
-            }
-        }
+        handleMouseClick(evt);
     }//GEN-LAST:event_lbl_descriptionMouseClicked
 
     private void lbl_descriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbl_descriptionMouseEntered
@@ -125,6 +132,72 @@ public class ShPopupItem extends ShPanel {
     private javax.swing.JLabel lbl_icon;
     private javax.swing.JLabel lbl_iconSub;
     // End of variables declaration//GEN-END:variables
+
+    private void installClickSupport() {
+        MouseAdapter clickListener = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                handleMouseClick(event);
+            }
+        };
+        addMouseListener(clickListener);
+        lbl_icon.addMouseListener(clickListener);
+        lbl_iconSub.addMouseListener(clickListener);
+        lbl_icon.setCursor(HAND_CURSOR);
+        lbl_iconSub.setCursor(HAND_CURSOR);
+    }
+
+    private void handleMouseClick(MouseEvent event) {
+        if (event != null && SwingUtilities.isLeftMouseButton(event)) {
+            doClick();
+        }
+    }
+
+    /**
+     * Activa el item igual que un clic principal del usuario.
+     */
+    public void doClick() {
+        if (!isEnabled()) {
+            return;
+        }
+        if (isRoot()) {
+            showSubMenu();
+            return;
+        }
+        fireActionPerformed();
+    }
+
+    private void showSubMenu() {
+        JDialog menu = getSubMenu();
+        if (menu == null) {
+            return;
+        }
+        if (isShowing()) {
+            Point location = getLocationOnScreen();
+            menu.setLocation(location.x + getWidth(), location.y);
+        } else {
+            PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+            if (pointerInfo != null) {
+                menu.setLocation(pointerInfo.getLocation());
+            }
+        }
+        menu.setVisible(true);
+    }
+
+    private void fireActionPerformed() {
+        Runnable currentTask = task;
+        if (currentTask != null) {
+            currentTask.run();
+        }
+        ActionEvent event = new ActionEvent(
+                this,
+                ActionEvent.ACTION_PERFORMED,
+                title != null ? title : ""
+        );
+        for (ActionListener listener : getActionListeners()) {
+            listener.actionPerformed(event);
+        }
+    }
 
     public void setRoot(boolean root) {
         this.root = root;
@@ -149,11 +222,35 @@ public class ShPopupItem extends ShPanel {
     }
 
     public void setTask(Runnable task) {
-        this.task = task;
+        setOnClick(task);
     }
 
     public Runnable getTask() {
+        return getOnClick();
+    }
+
+    public void setOnClick(Runnable onClick) {
+        this.task = onClick;
+    }
+
+    public Runnable getOnClick() {
         return task;
+    }
+
+    public void addActionListener(ActionListener listener) {
+        if (listener != null) {
+            actionListeners.add(ActionListener.class, listener);
+        }
+    }
+
+    public void removeActionListener(ActionListener listener) {
+        if (listener != null) {
+            actionListeners.remove(ActionListener.class, listener);
+        }
+    }
+
+    public ActionListener[] getActionListeners() {
+        return actionListeners.getListeners(ActionListener.class);
     }
 
     public void setIcon(Icon icon) {
@@ -166,7 +263,7 @@ public class ShPopupItem extends ShPanel {
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title = title != null ? title : "";
         lbl_description.setText(this.title);
     }
 
@@ -175,6 +272,9 @@ public class ShPopupItem extends ShPanel {
     }
 
     public void setTitleFont(Font titleFont) {
+        if (titleFont == null) {
+            return;
+        }
         this.titleFont = titleFont;
         lbl_description.setFont(this.titleFont);
     }
@@ -184,7 +284,9 @@ public class ShPopupItem extends ShPanel {
     }
 
     public void setEnteredColor(Color enteredColor) {
-        this.enteredColor = enteredColor;
+        if (enteredColor != null) {
+            this.enteredColor = enteredColor;
+        }
     }
 
     public Color getEnteredColor() {
@@ -192,7 +294,9 @@ public class ShPopupItem extends ShPanel {
     }
 
     public void setExitedColor(Color exitedColor) {
-        this.exitedColor = exitedColor;
+        if (exitedColor != null) {
+            this.exitedColor = exitedColor;
+        }
 
     }
 

@@ -7,8 +7,8 @@ import java.awt.Color;
  */
 public final class RenderColor {
 
-    public static final Color GREEN_COLOR = new Color(212, 237, 218);
-    public static final Color RED_COLOR = new Color(248, 215, 218);
+    public static final Color GREEN_COLOR = new Color(52428);
+    public static final Color RED_COLOR = new Color(16737894);
     public static final Color YELLOW_COLOR = new Color(255, 243, 205);
     public static final Color BLUE_COLOR = new Color(207, 226, 255);
     public static final Color ORANGE_COLOR = new Color(255, 229, 180);
@@ -32,5 +32,27 @@ public final class RenderColor {
                 + 0.587 * background.getGreen()
                 + 0.114 * background.getBlue()) / 255;
         return luminance < 0.55 ? Color.WHITE : Color.BLACK;
+    }
+
+    public static Color statusForeground(Color color) {
+        if (GREEN_COLOR.equals(color)) {
+            return GREEN_TEXT;
+        }
+        if (RED_COLOR.equals(color)) {
+            return RED_TEXT;
+        }
+        if (YELLOW_COLOR.equals(color)) {
+            return YELLOW_TEXT;
+        }
+        if (BLUE_COLOR.equals(color)) {
+            return BLUE_TEXT;
+        }
+        if (ORANGE_COLOR.equals(color)) {
+            return ORANGE_TEXT;
+        }
+        if (GRAY_COLOR.equals(color)) {
+            return GRAY_TEXT;
+        }
+        return readableForeground(color);
     }
 }

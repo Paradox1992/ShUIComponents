@@ -1,5 +1,6 @@
 package shui.contracts.table;
 
+import com.ShPopups.ShPopupMenu;
 import com.requestsupport.interfaces.RowMapper;
 import com.requestsupport.responses.PaginatedApiResponse;
 import com.requestsupport.responses.PaginationMeta;
@@ -56,6 +57,10 @@ public interface Tableable<T> {
 
     JDialog getMenu();
 
+    void setPopupMenu(ShPopupMenu popupMenu);
+
+    ShPopupMenu getPopupMenu();
+
     JScrollPane getScroll();
 
     JTable getTable();
@@ -63,6 +68,10 @@ public interface Tableable<T> {
     void setPaged(boolean paged);
 
     boolean isPaged();
+
+    void setPagedMode(PagedMode pagedMode);
+
+    PagedMode getPagedMode();
 
     void setPageHandler(PageRequestHandler handler);
 

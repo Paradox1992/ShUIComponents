@@ -216,9 +216,45 @@ public final class ShButton extends BaseContainer implements Buttonable {
         if (replaceEmptyText && buttonText.isBlank()) {
             buttonText = styleDelegate.defaultText();
         }
-        contentLabel.setText(buttonText);
+        contentLabel.setText(toDisplayText(buttonText));
         revalidate();
         repaint();
+    }
+
+    private String toDisplayText(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        String normalized = text.replace("\\r\\n", "\n")
+                .replace("\\n", "\n")
+                .replace("\r\n", "\n")
+                .replace('\r', '\n');
+        if (!normalized.contains("\n")) {
+            return text;
+        }
+        return "<html><div style='text-align:center;'>"
+                + escapeHtml(normalized).replace("\n", "<br>")
+                + "</div></html>";
+    }
+
+    private String escapeHtml(String text) {
+        StringBuilder escaped = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            switch (ch) {
+                case '&' ->
+                    escaped.append("&amp;");
+                case '<' ->
+                    escaped.append("&lt;");
+                case '>' ->
+                    escaped.append("&gt;");
+                case '"' ->
+                    escaped.append("&quot;");
+                default ->
+                    escaped.append(ch);
+            }
+        }
+        return escaped.toString();
     }
 
     private Color adjust(Color color, float factor) {

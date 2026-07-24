@@ -10,7 +10,7 @@ import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
 /**
- * Renderer para pintar filas o celdas segun reglas de estado.
+ * Renderer para pintar texto de celdas segun reglas de estado.
  */
 public class StatusCellRenderer extends BasicRenderer {
 
@@ -118,10 +118,9 @@ public class StatusCellRenderer extends BasicRenderer {
     }
 
     private static void applyRule(Component cell, ModelRender rule) {
-        Color background = rule.getBackground();
-        cell.setBackground(background);
-        cell.setForeground(rule.getForeground() != null
+        Color color = rule.getForeground() != null
                 ? rule.getForeground()
-                : RenderColor.readableForeground(background));
+                : RenderColor.statusForeground(rule.getBackground());
+        cell.setForeground(color);
     }
 }

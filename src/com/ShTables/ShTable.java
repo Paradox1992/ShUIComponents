@@ -1,10 +1,12 @@
 package com.ShTables;
 
 import com.ShContainers.ShPanel;
+import com.ShPopups.ShPopupMenu;
 import com.requestsupport.interfaces.RowMapper;
 import com.requestsupport.responses.PaginatedApiResponse;
 import com.requestsupport.responses.PaginationMeta;
 import shui.contracts.table.PageRequestHandler;
+import shui.contracts.table.PagedMode;
 import shui.contracts.table.TableColumnSpec;
 import shui.contracts.table.TableTheme;
 import shui.contracts.table.Tableable;
@@ -47,6 +49,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     private final TableSelectionDelegate<T> selectionDelegate = new TableSelectionDelegate<>(table, model);
 
     private TableCellRenderer customRenderer;
+    private int requestedPage = 1;
 
     public ShTable() {
         initUI();
@@ -62,9 +65,11 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         table.setRowSorter(rowSorter);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         interactionDelegate.install(table);
+        paginationDelegate.addPageRequestHandler(this::updateRequestedPage);
 
         add(searchDelegate.getComponent(), BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
+        add(paginationDelegate.getComponent(), BorderLayout.SOUTH);
 
         styleDelegate.applyTheme(TableTheme.SHUI);
         refreshStyle();
@@ -98,6 +103,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     @Override
     public void setData(List<T> data, RowMapper<? super T> mapper) {
         model.setData(data, mapper);
+        refreshPaginationState();
     }
 
     @Override
@@ -105,36 +111,43 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         if (pagedData == null) {
             clearTable();
             paginationDelegate.reset();
+            refreshPaginationState();
             return;
         }
         updatePaginationState(pagedData.getMeta());
         model.setData(pagedData.getData() != null ? pagedData.getData() : List.of(), mapper);
+        refreshPaginationState();
     }
 
     @Override
     public void setTableData(List<T> data, RowMapper<? super T> mapper, PaginationMeta paginationInfo) {
         updatePaginationState(paginationInfo);
         model.setData(data, mapper);
+        refreshPaginationState();
     }
 
     @Override
     public void appendTableData(List<T> data, RowMapper<? super T> mapper) {
         model.appendData(data, mapper);
+        refreshPaginationState();
     }
 
     @Override
     public void addRow(T item) {
         model.addRow(item);
+        refreshPaginationState();
     }
 
     @Override
     public void updateRow(int rowIndex, T item) {
         model.updateRow(rowIndex, item);
+        refreshPaginationState();
     }
 
     @Override
     public void clearTable() {
         model.clear();
+        refreshPaginationState();
     }
 
     @Override
@@ -198,6 +211,16 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     }
 
     @Override
+    public void setPopupMenu(ShPopupMenu popupMenu) {
+        interactionDelegate.setPopupMenu(popupMenu);
+    }
+
+    @Override
+    public ShPopupMenu getPopupMenu() {
+        return interactionDelegate.getPopupMenu();
+    }
+
+    @Override
     public JScrollPane getScroll() {
         return scrollPane;
     }
@@ -210,6 +233,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     @Override
     public void setPaged(boolean paged) {
         paginationDelegate.setPaged(paged);
+        refreshPaginationState();
     }
 
     @Override
@@ -218,8 +242,35 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     }
 
     @Override
+    public void setPagedMode(PagedMode pagedMode) {
+        paginationDelegate.setPagedMode(pagedMode);
+        refreshPaginationState();
+    }
+
+    @Override
+    public PagedMode getPagedMode() {
+        return paginationDelegate.getPagedMode();
+    }
+
+    @Override
     public void setPageHandler(PageRequestHandler handler) {
         paginationDelegate.setHandler(handler);
+    }
+
+    public PageRequestHandler getPageHandler() {
+        return paginationDelegate.getHandler();
+    }
+
+    public void addPageRequestHandler(PageRequestHandler handler) {
+        paginationDelegate.addPageRequestHandler(handler);
+    }
+
+    public void removePageRequestHandler(PageRequestHandler handler) {
+        paginationDelegate.removePageRequestHandler(handler);
+    }
+
+    public int getRequestedPage() {
+        return requestedPage;
     }
 
     public void nextPage() {
@@ -240,6 +291,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
 
     public void setShowItemsCount(boolean showItemsCount) {
         paginationDelegate.setShowItemsCount(showItemsCount);
+        refreshPaginationState();
     }
 
     public boolean isShowItemsCount() {
@@ -491,6 +543,29 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         } else {
             paginationDelegate.reset();
         }
+    }
+
+    private void refreshPaginationState() {
+        paginationDelegate.setVisibleRowCount(model.getRowCount());
+        syncRequestedPage();
+        revalidate();
+        repaint();
+    }
+
+    private void syncRequestedPage() {
+        int currentPage = paginationDelegate.getRequestedPage();
+        if (requestedPage == currentPage) {
+            return;
+        }
+        int oldPage = requestedPage;
+        requestedPage = currentPage;
+        firePropertyChange("requestedPage", oldPage, requestedPage);
+    }
+
+    private void updateRequestedPage(int page) {
+        int oldPage = requestedPage;
+        requestedPage = page;
+        firePropertyChange("requestedPage", oldPage, requestedPage);
     }
 
     /**

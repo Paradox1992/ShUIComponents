@@ -14,9 +14,11 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -25,14 +27,19 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.time.format.TextStyle;
+import java.util.Date;
 import java.util.Locale;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -45,7 +52,9 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JWindow;
 import javax.swing.ListSelectionModel;
+import javax.swing.MenuSelectionManager;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
@@ -93,7 +102,7 @@ public class ShDateSelector extends BaseContainer {
     private final JLabel monthNameLabel = new JLabel("", SwingConstants.CENTER);
     private final JLabel yearLabel = new JLabel("", SwingConstants.CENTER);
     private final JPopupMenu monthPickerPopup = new JPopupMenu();
-    private final JPopupMenu yearPickerPopup = new JPopupMenu();
+    private JWindow yearPickerWindow;
     private final JPanel weekHeaderPanel = new JPanel(new GridLayout(1, 7));
     private final JPanel daysPanel = new JPanel(new GridLayout(6, 7, 2, 2));
     private final DayCell[] dayCells = new DayCell[42];
@@ -132,11 +141,22 @@ public class ShDateSelector extends BaseContainer {
     private Color dayHoverColor = new Color(227, 242, 253);
     private boolean updatingText;
     private boolean dateTextValid = true;
+    private boolean yearPickerHasFocus;
+    private boolean popupClosedByCalendarButton;
     private String validationMessage = "";
 
     public ShDateSelector() {
         super(8, EMPTY_BG);
         initUI();
+    }
+
+    @Override
+    public void removeNotify() {
+        if (yearPickerWindow != null) {
+            yearPickerWindow.dispose();
+            yearPickerWindow = null;
+        }
+        super.removeNotify();
     }
 
     private void initUI() {
@@ -184,7 +204,7 @@ public class ShDateSelector extends BaseContainer {
 
             @Override
             public void focusLost(FocusEvent e) {
-                commitEditorText(true, false);
+                commitEditorText(false, false);
                 refreshFieldBorder();
             }
         });
@@ -200,8 +220,13 @@ public class ShDateSelector extends BaseContainer {
         calendarButton.setFocusable(false);
         calendarButton.addMouseListener(new MouseAdapter() {
             @Override
-            public void mousePressed(MouseEvent e) {
-                if (isEnabled()) {
+            public void mouseClicked(MouseEvent e) {
+                if (isEnabled() && SwingUtilities.isLeftMouseButton(e)
+                        && calendarButton.contains(e.getPoint())) {
+                    if (popupClosedByCalendarButton) {
+                        popupClosedByCalendarButton = false;
+                        return;
+                    }
                     SwingUtilities.invokeLater(() -> {
                         commitEditorText(false, false);
                         togglePopup();
@@ -220,14 +245,15 @@ public class ShDateSelector extends BaseContainer {
         popup.addPopupMenuListener(new PopupMenuListener() {
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                popupClosedByCalendarButton = false;
                 displayedMonth = selectedDate != null ? YearMonth.from(selectedDate) : YearMonth.now();
                 refreshCalendar();
             }
 
             @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                monthPickerPopup.setVisible(false);
-                yearPickerPopup.setVisible(false);
+                popupClosedByCalendarButton = calendarButton.isShowing()
+                        && calendarButton.getMousePosition() != null;
             }
 
             @Override
@@ -279,14 +305,18 @@ public class ShDateSelector extends BaseContainer {
         configureCalendarSelectorLabel(yearLabel);
         monthNameLabel.addMouseListener(new MouseAdapter() {
             @Override
-            public void mousePressed(MouseEvent e) {
-                showMonthPicker();
+            public void mouseReleased(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    showMonthPicker();
+                }
             }
         });
         yearLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                showYearPicker();
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    showYearPicker();
+                }
             }
         });
         header.add(monthNameLabel);
@@ -327,6 +357,18 @@ public class ShDateSelector extends BaseContainer {
         return selectedDate;
     }
 
+    public Date getData() {
+        return selectedDate != null
+                ? Date.from(selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                : null;
+    }
+
+    public OffsetDateTime getdateOffset() {
+        return selectedDate != null
+                ? selectedDate.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime()
+                : null;
+    }
+
     public void setText(String text) {
         if (text == null || text.isBlank()) {
             setSelectedDate(null);
@@ -344,6 +386,17 @@ public class ShDateSelector extends BaseContainer {
             }
             markDateInvalid("La fecha debe ser valida y tener formato " + datePattern + ".");
         }
+    }
+
+    /**
+     * Establece la fecha desde un OffsetDateTime y la muestra usando el patron
+     * configurado en el componente. La hora y el offset no forman parte del
+     * valor seleccionado porque este control trabaja con fechas LocalDate.
+     *
+     * @param dateTime fecha con offset; null limpia el componente
+     */
+    public void setText(OffsetDateTime dateTime) {
+        setSelectedDate(dateTime != null ? dateTime.toLocalDate() : null);
     }
 
     public String getText() {
@@ -626,16 +679,25 @@ public class ShDateSelector extends BaseContainer {
     }
 
     public void showPopup() {
-        if (!isEnabled() || popup.isVisible()) {
+        if (!isEnabled() || popup.isShowing()) {
             return;
         }
+        if (popup.isVisible()) {
+            popup.setVisible(false);
+        }
+        MenuSelectionManager.defaultManager().clearSelectedPath();
+        monthPickerPopup.setVisible(false);
+        hideYearPicker();
         displayedMonth = selectedDate != null ? YearMonth.from(selectedDate) : YearMonth.now();
         refreshCalendar();
         popup.show(this, 0, getHeight());
     }
 
     public void hidePopup() {
+        monthPickerPopup.setVisible(false);
+        hideYearPicker();
         popup.setVisible(false);
+        MenuSelectionManager.defaultManager().clearSelectedPath();
     }
 
     public boolean isPopupVisible() {
@@ -651,7 +713,7 @@ public class ShDateSelector extends BaseContainer {
     }
 
     private void togglePopup() {
-        if (popup.isVisible()) {
+        if (popup.isShowing()) {
             hidePopup();
         } else {
             showPopup();
@@ -888,14 +950,26 @@ public class ShDateSelector extends BaseContainer {
         if (!isEnabled() || displayedMonth == null) {
             return;
         }
+        hideYearPicker();
         monthPickerPopup.removeAll();
+        monthPickerPopup.setLightWeightPopupEnabled(false);
         Locale locale = Locale.forLanguageTag("es-HN");
         for (Month month : Month.values()) {
             JMenuItem item = new JMenuItem(month.getDisplayName(TextStyle.FULL_STANDALONE, locale));
             item.setFont(new Font("Segoe UI", Font.PLAIN, 13));
             item.setForeground(month == displayedMonth.getMonth() ? accentColor : TEXT_COLOR);
             item.setBackground(popupBackgroundColor);
-            item.addActionListener(event -> selectDisplayedMonth(month));
+            item.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent event) {
+                    selectDisplayedMonth(month);
+                }
+            });
+            item.addActionListener(event -> {
+                if (monthPickerPopup.isVisible()) {
+                    selectDisplayedMonth(month);
+                }
+            });
             monthPickerPopup.add(item);
         }
         monthPickerPopup.show(monthNameLabel, 0, monthNameLabel.getHeight());
@@ -905,6 +979,7 @@ public class ShDateSelector extends BaseContainer {
         if (!isEnabled() || displayedMonth == null) {
             return;
         }
+        monthPickerPopup.setVisible(false);
         int startYear = firstPickerYear();
         int endYear = lastPickerYear();
         if (endYear < startYear) {
@@ -925,7 +1000,12 @@ public class ShDateSelector extends BaseContainer {
         yearList.setBackground(popupBackgroundColor);
         yearList.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseReleased(MouseEvent e) {
+            public void mousePressed(MouseEvent e) {
+                int index = yearList.locationToIndex(e.getPoint());
+                Rectangle cellBounds = index >= 0 ? yearList.getCellBounds(index, index) : null;
+                if (cellBounds != null && cellBounds.contains(e.getPoint())) {
+                    yearList.setSelectedIndex(index);
+                }
                 Integer year = yearList.getSelectedValue();
                 if (year != null) {
                     selectDisplayedYear(year);
@@ -938,22 +1018,75 @@ public class ShDateSelector extends BaseContainer {
         scroll.getViewport().setBackground(popupBackgroundColor);
         scroll.setPreferredSize(new Dimension(92, yearList.getVisibleRowCount() * yearList.getFixedCellHeight()));
 
-        yearPickerPopup.removeAll();
-        yearPickerPopup.add(scroll);
-        yearPickerPopup.pack();
-        yearPickerPopup.show(yearLabel, 0, yearLabel.getHeight());
+        JWindow pickerWindow = getYearPickerWindow();
+        pickerWindow.getContentPane().removeAll();
+        pickerWindow.getContentPane().add(scroll);
+        pickerWindow.getContentPane().setBackground(popupBackgroundColor);
+        pickerWindow.pack();
+        Point location = yearLabel.getLocationOnScreen();
+        pickerWindow.setLocation(location.x, location.y + yearLabel.getHeight());
+        popup.setVisible(false);
+        MenuSelectionManager.defaultManager().clearSelectedPath();
+        yearPickerHasFocus = false;
+        pickerWindow.setVisible(true);
+        pickerWindow.toFront();
+        SwingUtilities.invokeLater(() -> {
+            pickerWindow.toFront();
+            yearList.requestFocusInWindow();
+        });
     }
 
     private void selectDisplayedMonth(Month month) {
-        displayedMonth = YearMonth.of(displayedMonth.getYear(), month);
+        if (month == null) {
+            return;
+        }
+        LocalDate today = LocalDate.now();
+        int year = displayedMonth != null ? displayedMonth.getYear() : today.getYear();
+        LocalDate selected = dateWithClampedDay(year, month, today.getDayOfMonth());
         monthPickerPopup.setVisible(false);
-        refreshCalendar();
+        MenuSelectionManager.defaultManager().clearSelectedPath();
+        setSelectedDate(selected, false);
     }
 
     private void selectDisplayedYear(int year) {
-        displayedMonth = YearMonth.of(year, displayedMonth.getMonth());
-        yearPickerPopup.setVisible(false);
-        refreshCalendar();
+        LocalDate today = LocalDate.now();
+        LocalDate selected = dateWithClampedDay(year, today.getMonth(), today.getDayOfMonth());
+        hideYearPicker();
+        setSelectedDate(selected, false);
+    }
+
+    private JWindow getYearPickerWindow() {
+        if (yearPickerWindow == null) {
+            Window owner = SwingUtilities.getWindowAncestor(this);
+            yearPickerWindow = new JWindow(owner);
+            yearPickerWindow.setFocusableWindowState(true);
+            yearPickerWindow.addWindowFocusListener(new WindowAdapter() {
+                @Override
+                public void windowGainedFocus(WindowEvent event) {
+                    yearPickerHasFocus = true;
+                }
+
+                @Override
+                public void windowLostFocus(WindowEvent event) {
+                    if (yearPickerHasFocus) {
+                        hideYearPicker();
+                    }
+                }
+            });
+        }
+        return yearPickerWindow;
+    }
+
+    private void hideYearPicker() {
+        yearPickerHasFocus = false;
+        if (yearPickerWindow != null) {
+            yearPickerWindow.setVisible(false);
+        }
+    }
+
+    private LocalDate dateWithClampedDay(int year, Month month, int dayOfMonth) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        return yearMonth.atDay(Math.min(Math.max(1, dayOfMonth), yearMonth.lengthOfMonth()));
     }
 
     private int firstPickerYear() {

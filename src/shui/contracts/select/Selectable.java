@@ -87,4 +87,16 @@ public interface Selectable<E> {
     void setHeaderFont(Font font);
 
     Font getHeaderFont();
+
+    void setContentFont(Font font);
+
+    Font getContentFont();
+
+    void setOnChange(Runnable onChange);
+
+    Runnable getOnChange();
+
+    void setOnchangeHandler(SelectChangeHandler<E> onchangeHandler);
+
+    SelectChangeHandler<E> getOnchangeHandler();
 }
