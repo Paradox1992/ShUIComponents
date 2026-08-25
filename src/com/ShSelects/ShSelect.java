@@ -18,12 +18,17 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import javax.swing.DefaultListModel;
 import javax.swing.BorderFactory;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -60,7 +65,8 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     private final JPanel fieldPanel = new JPanel(new BorderLayout());
     private final JPopupMenu popup = new JPopupMenu();
     private ComboBoxModel<E> model = new DefaultComboBoxModel<>();
-    private final JList<E> list = new JList<>(model);
+    private final DefaultListModel<E> filteredModel = new DefaultListModel<>();
+    private final JList<E> list = new JList<>(filteredModel);
     private final JScrollPane scrollPane = new JScrollPane(list);
     private final ListDataListener modelListener = new ListDataListener() {
         @Override
@@ -85,7 +91,9 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     private int maximumRowCount = 8;
     private Font contentFont = new Font("Segoe UI", Font.PLAIN, 13);
     private Runnable onChange;
-    private SelectChangeHandler<E> onchangeHandler;
+    private SelectChangeHandler onchangeHandler;
+    private boolean filterEnabled = true;
+    private String filterText = "";
 
     public ShSelect() {
         super(8, EMPTY_BG);
@@ -113,6 +121,8 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         configurePopup();
         model.addListDataListener(modelListener);
         installMouseHandler();
+        installKeyHandler();
+        refreshFilteredModel();
         updateHeaderLayout();
         refreshDisplay();
     }
@@ -169,7 +179,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
             public void mouseReleased(MouseEvent e) {
                 int index = list.locationToIndex(e.getPoint());
                 if (index >= 0) {
-                    setSelectedIndex(index);
+                    setSelectedValue(filteredModel.getElementAt(index));
                     hidePopup();
                 }
             }
@@ -204,15 +214,36 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         headerLabel.addMouseListener(adapter);
     }
 
+    private void installKeyHandler() {
+        KeyAdapter adapter = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                handleNavigationKey(e);
+            }
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+                handleFilterKey(e);
+            }
+        };
+        addKeyListener(adapter);
+        list.addKeyListener(adapter);
+    }
+
     @Override
     public void setData(List<E> items) {
+        Object selectedValue = model.getSelectedItem();
         DefaultComboBoxModel<E> nextModel = new DefaultComboBoxModel<>();
         if (items != null) {
             for (E item : items) {
                 nextModel.addElement(item);
             }
         }
-        if (nextModel.getSize() > 0) {
+
+        int selectedIndex = indexOf(nextModel, selectedValue);
+        if (selectedIndex >= 0) {
+            nextModel.setSelectedItem(nextModel.getElementAt(selectedIndex));
+        } else if (nextModel.getSize() > 0) {
             nextModel.setSelectedItem(nextModel.getElementAt(0));
         } else {
             nextModel.setSelectedItem(null);
@@ -234,8 +265,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         this.model.removeListDataListener(modelListener);
         this.model = nextModel;
         this.model.addListDataListener(modelListener);
-        list.setModel(this.model);
-        list.setSelectedIndex(getSelectedIndex());
+        clearFilter();
         refreshDisplay();
     }
 
@@ -273,11 +303,12 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
 
     @Override
     public void setSelectedValue(E value) {
+        E resolvedValue = resolveModelValue(value);
         Object old = model.getSelectedItem();
-        model.setSelectedItem(value);
-        list.setSelectedIndex(getSelectedIndex());
+        model.setSelectedItem(resolvedValue);
+        selectListValue(resolvedValue);
         refreshDisplay();
-        if (!Objects.equals(old, value)) {
+        if (!Objects.equals(old, resolvedValue)) {
             fireActionEvent();
         }
     }
@@ -418,6 +449,19 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     }
 
     @Override
+    public void setFilterEnabled(boolean filterEnabled) {
+        this.filterEnabled = filterEnabled;
+        if (!this.filterEnabled) {
+            clearFilter();
+        }
+    }
+
+    @Override
+    public boolean isFilterEnabled() {
+        return filterEnabled;
+    }
+
+    @Override
     public void setHeaderText(String headerText) {
         this.headerText = headerText != null ? headerText : "";
         headerLabel.setText(this.headerText);
@@ -508,12 +552,12 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     }
 
     @Override
-    public void setOnchangeHandler(SelectChangeHandler<E> onchangeHandler) {
+    public void setOnchangeHandler(SelectChangeHandler onchangeHandler) {
         this.onchangeHandler = onchangeHandler;
     }
 
     @Override
-    public SelectChangeHandler<E> getOnchangeHandler() {
+    public SelectChangeHandler getOnchangeHandler() {
         return onchangeHandler;
     }
 
@@ -533,6 +577,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         if (!isEnabled() || popup.isVisible()) {
             return;
         }
+        refreshFilteredModel();
         updatePopupSize();
         refreshPopupStyle();
         popup.revalidate();
@@ -542,6 +587,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
 
     public void hidePopup() {
         popup.setVisible(false);
+        clearFilter();
     }
 
     public boolean isPopupVisible() {
@@ -552,6 +598,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
         if (popup.isVisible()) {
             hidePopup();
         } else {
+            clearFilter();
             showPopup();
         }
     }
@@ -586,7 +633,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     }
 
     private void updatePopupSize() {
-        int rows = Math.min(Math.max(1, model.getSize()), maximumRowCount);
+        int rows = Math.min(Math.max(1, filteredModel.getSize()), maximumRowCount);
         int height = rows * list.getFixedCellHeight();
         int width = Math.max(Math.max(getWidth(), getPreferredSize().width), 120);
         list.setVisibleRowCount(rows);
@@ -594,14 +641,165 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
     }
 
     private void modelChanged() {
-        list.setSelectedIndex(getSelectedIndex());
+        refreshFilteredModel();
         refreshDisplay();
         updatePopupSize();
     }
 
-    private int indexOf(Object value) {
+    private void handleNavigationKey(KeyEvent event) {
+        if (!isEnabled()) {
+            return;
+        }
+        switch (event.getKeyCode()) {
+            case KeyEvent.VK_ESCAPE -> {
+                hidePopup();
+                event.consume();
+            }
+            case KeyEvent.VK_ENTER -> {
+                if (popup.isVisible()) {
+                    selectHighlightedItem();
+                    event.consume();
+                }
+            }
+            case KeyEvent.VK_UP -> {
+                if (popup.isVisible()) {
+                    moveHighlightedItem(-1);
+                    event.consume();
+                }
+            }
+            case KeyEvent.VK_DOWN -> {
+                if (!popup.isVisible()) {
+                    clearFilter();
+                    showPopup();
+                } else {
+                    moveHighlightedItem(1);
+                }
+                event.consume();
+            }
+            case KeyEvent.VK_BACK_SPACE -> {
+                if (filterEnabled && !filterText.isEmpty()) {
+                    filterText = filterText.substring(0, filterText.length() - 1);
+                    applyFilterAndShowPopup();
+                    event.consume();
+                }
+            }
+            case KeyEvent.VK_DELETE -> {
+                if (filterEnabled && !filterText.isEmpty()) {
+                    clearFilter();
+                    updatePopupSize();
+                    event.consume();
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void handleFilterKey(KeyEvent event) {
+        if (!isEnabled() || !filterEnabled || event.isControlDown() || event.isAltDown() || event.isMetaDown()) {
+            return;
+        }
+        char ch = event.getKeyChar();
+        if (Character.isISOControl(ch)) {
+            return;
+        }
+        filterText += ch;
+        applyFilterAndShowPopup();
+        event.consume();
+    }
+
+    private void applyFilterAndShowPopup() {
+        refreshFilteredModel();
+        updatePopupSize();
+        refreshPopupStyle();
+        if (!popup.isVisible()) {
+            showPopup();
+        } else {
+            popup.revalidate();
+            popup.pack();
+        }
+    }
+
+    private void clearFilter() {
+        if (!filterText.isEmpty()) {
+            filterText = "";
+        }
+        refreshFilteredModel();
+    }
+
+    private void refreshFilteredModel() {
+        Object selected = model.getSelectedItem();
+        filteredModel.clear();
         for (int i = 0; i < model.getSize(); i++) {
-            if (Objects.equals(model.getElementAt(i), value)) {
+            E item = model.getElementAt(i);
+            if (matchesFilter(item)) {
+                filteredModel.addElement(item);
+            }
+        }
+        selectListValue(selected);
+    }
+
+    private boolean matchesFilter(E item) {
+        if (!filterEnabled || filterText.isBlank()) {
+            return true;
+        }
+        return normalize(String.valueOf(item)).contains(normalize(filterText));
+    }
+
+    private String normalize(String value) {
+        String normalized = Normalizer.normalize(value != null ? value : "", Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
+    }
+
+    private void selectListValue(Object value) {
+        int selectedIndex = -1;
+        for (int i = 0; i < filteredModel.getSize(); i++) {
+            if (Objects.equals(filteredModel.getElementAt(i), value)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        list.setSelectedIndex(selectedIndex);
+        if (selectedIndex >= 0) {
+            list.ensureIndexIsVisible(selectedIndex);
+        }
+    }
+
+    private E resolveModelValue(E value) {
+        if (value == null) {
+            return null;
+        }
+        int index = indexOf(value);
+        return index >= 0 ? model.getElementAt(index) : value;
+    }
+
+    private void moveHighlightedItem(int direction) {
+        int size = filteredModel.getSize();
+        if (size == 0) {
+            return;
+        }
+        int index = list.getSelectedIndex();
+        int next = index < 0 ? 0 : Math.max(0, Math.min(size - 1, index + direction));
+        list.setSelectedIndex(next);
+        list.ensureIndexIsVisible(next);
+    }
+
+    private void selectHighlightedItem() {
+        int index = list.getSelectedIndex();
+        if (index < 0 || index >= filteredModel.getSize()) {
+            return;
+        }
+        setSelectedValue(filteredModel.getElementAt(index));
+        hidePopup();
+    }
+
+    private int indexOf(Object value) {
+        return indexOf(model, value);
+    }
+
+    private int indexOf(ComboBoxModel<E> targetModel, Object value) {
+        for (int i = 0; i < targetModel.getSize(); i++) {
+            if (Objects.equals(targetModel.getElementAt(i), value)) {
                 return i;
             }
         }
@@ -719,7 +917,7 @@ public final class ShSelect<E> extends BaseContainer implements Selectable<E> {
 
     private void fireActionEvent() {
         if (onchangeHandler != null) {
-            onchangeHandler.onChange(getSelectedValue());
+            onchangeHandler.onChange();
         }
         if (onChange != null) {
             onChange.run();

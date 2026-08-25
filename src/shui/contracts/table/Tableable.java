@@ -51,6 +51,12 @@ public interface Tableable<T> {
 
     boolean isRowSelected();
 
+    /**
+     * Configura el renderer de las celdas de contenido sin afectar el encabezado.
+     * Un valor {@code null} restaura el renderer de contenido predeterminado.
+     *
+     * @param renderer renderer para las celdas de datos
+     */
     void setRenderer(TableCellRenderer renderer);
 
     void setMenu(JDialog menu);

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.ImageIcon;
+import shui.components.base.BaseContainer;
 
 /**
  * Base comun para metadatos JavaBeans usados por la paleta de NetBeans.
@@ -17,6 +18,9 @@ import javax.swing.ImageIcon;
 public abstract class ShBeanInfoSupport extends SimpleBeanInfo {
 
     private static final String DEFAULT_ICON = "/shui/assets/recreacion.png";
+    private static final Set<String> BASE_CONTAINER_PREFERRED_PROPERTIES = Set.of(
+            "subscribedComponent"
+    );
 
     private final Class<?> beanClass;
     private final String displayName;
@@ -61,8 +65,9 @@ public abstract class ShBeanInfoSupport extends SimpleBeanInfo {
 
             for (PropertyDescriptor descriptor : descriptors) {
                 String name = descriptor.getName();
-                descriptor.setPreferred(preferred.contains(name));
+                descriptor.setPreferred(preferred.contains(name) || isBaseContainerPreferredProperty(name));
                 descriptor.setHidden(isHiddenProperty(name));
+                configureCommonProperty(descriptor);
             }
             return descriptors;
         } catch (IntrospectionException ex) {
@@ -86,5 +91,19 @@ public abstract class ShBeanInfoSupport extends SimpleBeanInfo {
 
     protected boolean isHiddenProperty(String property) {
         return hiddenProperties.contains(property);
+    }
+
+    private boolean isBaseContainerPreferredProperty(String property) {
+        return BaseContainer.class.isAssignableFrom(beanClass)
+                && BASE_CONTAINER_PREFERRED_PROPERTIES.contains(property);
+    }
+
+    private void configureCommonProperty(PropertyDescriptor descriptor) {
+        String name = descriptor.getName();
+        if ("subscribedComponent".equals(name)) {
+            descriptor.setShortDescription("Componente Shui que funcionara como grupo de suscripcion.");
+        } else if ("subscribedComponents".equals(name)) {
+            descriptor.setShortDescription("Lista inmodificable de componentes Shui suscritos.");
+        }
     }
 }

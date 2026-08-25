@@ -12,7 +12,7 @@ public class SelectUIDelegate {
     private Color foregroundColor = Color.BLACK;
     private Color selectionBackgroundColor = new Color(204, 204, 204);
     private Color selectionForegroundColor = Color.BLACK;
-    private Color popupBackgroundColor = Color.WHITE;
+    private Color popupBackgroundColor = new Color(0xF1, 0xFA, 0xEE);
     private boolean popupBorderVisible;
     private int iconSize = 14;
     private String placeholder = "";

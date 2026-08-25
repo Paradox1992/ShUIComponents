@@ -189,11 +189,8 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     @Override
     public void setRenderer(TableCellRenderer renderer) {
         customRenderer = renderer;
-        if (renderer != null) {
-            styleDelegate.setRenderer(table, renderer);
-        } else {
-            refreshStyle();
-        }
+        styleDelegate.setContentRenderer(table, renderer);
+        table.repaint();
     }
 
     public TableCellRenderer getRenderer() {
@@ -531,7 +528,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     private void refreshStyle() {
         styleDelegate.apply(table, scrollPane);
         if (customRenderer != null) {
-            styleDelegate.setRenderer(table, customRenderer);
+            styleDelegate.setContentRenderer(table, customRenderer);
         }
         revalidate();
         repaint();

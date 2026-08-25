@@ -82,10 +82,16 @@ public class TableStyleDelegate {
         }
     }
 
-    public void setRenderer(JTable table, TableCellRenderer renderer) {
-        if (table != null && renderer != null) {
-            table.setDefaultRenderer(Object.class, createAlignedRenderer(renderer));
+    /**
+     * Cambia exclusivamente el renderer de las celdas de contenido.
+     * El encabezado conserva su renderer y estilo independientes.
+     */
+    public void setContentRenderer(JTable table, TableCellRenderer renderer) {
+        if (table == null) {
+            return;
         }
+        table.setDefaultRenderer(Object.class,
+                renderer != null ? createAlignedRenderer(renderer) : cellRenderer);
     }
 
     public void applyTheme(TableTheme theme) {
@@ -121,7 +127,7 @@ public class TableStyleDelegate {
         cellForeground = new Color(33, 37, 41);
         headerBackground = new Color(248, 249, 250);
         headerForeground = new Color(33, 37, 41);
-        selectionBackground = new Color(13, 110, 253);
+        selectionBackground = new Color(29, 53, 87);
         selectionForeground = Color.WHITE;
         gridColor = new Color(222, 226, 230);
         alternateRowBackground = new Color(242, 242, 242);

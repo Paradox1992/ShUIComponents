@@ -11,7 +11,7 @@ public class ShSelectBeanInfo extends ShBeanInfoSupport {
                     "model", "placeholder", "selectedIndex", "buttonColor", "selectBackgroundColor",
                     "selectForegroundColor", "selectionBackgroundColor", "selectionForegroundColor",
                     "popupBackgroundColor", "popupBorderVisible", "iconSize", "maximumRowCount",
-                    "headerText", "headerPosition", "headerVisible", "headerForeground", "headerFont",
+                    "filterEnabled", "headerText", "headerPosition", "headerVisible", "headerForeground", "headerFont",
                     "contentFont", "onchangeHandler"
                 },
                 "context", "data", "items", "selectedValue", "onChange");

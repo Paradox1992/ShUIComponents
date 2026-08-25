@@ -68,6 +68,10 @@ public interface Selectable<E> {
 
     boolean isPopupBorderVisible();
 
+    void setFilterEnabled(boolean filterEnabled);
+
+    boolean isFilterEnabled();
+
     void setHeaderText(String headerText);
 
     String getHeaderText();
@@ -96,7 +100,7 @@ public interface Selectable<E> {
 
     Runnable getOnChange();
 
-    void setOnchangeHandler(SelectChangeHandler<E> onchangeHandler);
+    void setOnchangeHandler(SelectChangeHandler onchangeHandler);
 
-    SelectChangeHandler<E> getOnchangeHandler();
+    SelectChangeHandler getOnchangeHandler();
 }

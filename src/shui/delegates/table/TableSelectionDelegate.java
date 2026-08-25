@@ -65,7 +65,7 @@ public class TableSelectionDelegate<T> {
             return null;
         }
 
-        return model.getValueAt(conlIndex, conlIndex).toString();
+        return model.getValueAt(0, conlIndex).toString();
     }
 
     public String getValue_LR(int conlIndex) {

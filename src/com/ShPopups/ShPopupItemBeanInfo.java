@@ -11,9 +11,9 @@ public class ShPopupItemBeanInfo extends ShBeanInfoSupport {
         super(ShPopupItem.class, "ShPopupItem", "Item de menu popup Shui.",
                 "/shui/assets/shmenuItem.png",
                 new String[]{
-                    "title", "titleFont", "icon", "root", "enteredColor", "exitedColor"
+                    "title", "titleFont", "icon", "root", "enteredColor", "exitedColor", "task"
                 },
-                "context", "task", "onClick", "subMenu");
+                "context", "onClick", "subMenu");
     }
 
     @Override

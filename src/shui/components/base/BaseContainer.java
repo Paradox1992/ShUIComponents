@@ -23,6 +23,9 @@ import shui.delegates.visual.StateDelegate;
 import shui.delegates.visual.ThemeDelegate;
 import shui.theme.ShTheme;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 
@@ -64,6 +67,8 @@ public abstract class BaseContainer extends JPanel
     private final StateDelegate stateDelegate;
     private final AnimationDelegate animationDelegate;
     private final ThemeDelegate themeDelegate;
+    private final List<BaseContainer> subscribedComponents = new ArrayList<>();
+    private BaseContainer subscribedComponent;
     private int contentPadding;
 
     protected BaseContainer(int cornerRadius, Color backgroundColor) {
@@ -159,6 +164,95 @@ public abstract class BaseContainer extends JPanel
 
     public int getContentPadding() {
         return contentPadding;
+    }
+
+    /**
+     * Propiedad de diseno para seleccionar desde NetBeans el componente que
+     * funcionara como grupo de suscripcion para este componente.
+     *
+     * @param component grupo al que se suscribe este componente
+     */
+    public void setSubscribedComponent(BaseContainer component) {
+        if (component == this || subscribedComponent == component) {
+            return;
+        }
+
+        BaseContainer previousGroup = subscribedComponent;
+        subscribedComponent = component;
+
+        if (previousGroup != null) {
+            previousGroup.subscribedComponents.remove(this);
+        }
+        if (component != null && !component.subscribedComponents.contains(this)) {
+            component.subscribedComponents.add(this);
+        }
+    }
+
+    /**
+     * Obtiene el grupo al que esta suscrito este componente.
+     *
+     * @return grupo de suscripcion, o {@code null} si no esta suscrito
+     */
+    public BaseContainer getSubscribedComponent() {
+        return subscribedComponent;
+    }
+
+    /**
+     * Suscribe un componente Shui a este grupo.
+     *
+     * @param component componente a suscribir
+     */
+    public void subscribeComponent(BaseContainer component) {
+        if (component == null || component == this) {
+            return;
+        }
+        component.setSubscribedComponent(this);
+    }
+
+    /**
+     * Quita un componente previamente suscrito.
+     *
+     * @param component componente a remover
+     */
+    public void unsubscribeComponent(BaseContainer component) {
+        if (component == null) {
+            return;
+        }
+        if (subscribedComponents.remove(component)
+                && component.subscribedComponent == this) {
+            component.subscribedComponent = null;
+        }
+    }
+
+    /**
+     * Limpia todos los componentes suscritos.
+     */
+    public void clearSubscribedComponents() {
+        for (BaseContainer component : subscribedComponents) {
+            if (component.subscribedComponent == this) {
+                component.subscribedComponent = null;
+            }
+        }
+        subscribedComponents.clear();
+    }
+
+    /**
+     * Verifica si un componente esta suscrito.
+     *
+     * @param component componente a consultar
+     * @return {@code true} si el componente esta suscrito
+     */
+    public boolean isSubscribedComponent(BaseContainer component) {
+        return component != null && subscribedComponents.contains(component);
+    }
+
+    /**
+     * Retorna una vista inmodificable de los componentes suscritos.
+     *
+     * @return lista inmodificable de componentes suscritos
+     */
+    public List<BaseContainer> getSubscribedComponents() {
+        return Collections.unmodifiableList(subscribedComponents);
     }
 
     // ── Borderable ───────────────────────────────────────────────────────────
