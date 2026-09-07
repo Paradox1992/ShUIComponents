@@ -14,7 +14,6 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 
 /**
  * Boton Shui basado en BaseContainer, no en JButton.
@@ -26,6 +25,10 @@ public final class ShButton extends BaseContainer implements Buttonable {
     private final ButtonActionDelegate actionDelegate = new ButtonActionDelegate(this);
 
     private String buttonText = "";
+    private HorizontalAlignment horizontalAlignment = HorizontalAlignment.CENTER;
+    private VerticalAlignment verticalAlignment = VerticalAlignment.CENTER;
+    private HorizontalTextPosition horizontalTextPosition = HorizontalTextPosition.RIGHT;
+    private VerticalTextPosition verticalTextPosition = VerticalTextPosition.CENTER;
 
     public ShButton() {
         super(8, EMPTY_BG);
@@ -42,10 +45,10 @@ public final class ShButton extends BaseContainer implements Buttonable {
 
     private void configureContentLabel() {
         contentLabel.setOpaque(false);
-        contentLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        contentLabel.setVerticalAlignment(SwingConstants.CENTER);
-        contentLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
-        contentLabel.setVerticalTextPosition(SwingConstants.CENTER);
+        contentLabel.setHorizontalAlignment(horizontalAlignment.getSwingConstant());
+        contentLabel.setVerticalAlignment(verticalAlignment.getSwingConstant());
+        contentLabel.setHorizontalTextPosition(horizontalTextPosition.getSwingConstant());
+        contentLabel.setVerticalTextPosition(verticalTextPosition.getSwingConstant());
         contentLabel.setIconTextGap(8);
         contentLabel.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
         contentLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -170,6 +173,86 @@ public final class ShButton extends BaseContainer implements Buttonable {
         return contentLabel.getIconTextGap();
     }
 
+    /**
+     * Define la alineacion horizontal del contenido dentro del boton.
+     *
+     * @param alignment alineacion horizontal; CENTER cuando es null
+     */
+    @Override
+    public void setHorizontalAlignment(HorizontalAlignment alignment) {
+        HorizontalAlignment newAlignment = alignment != null ? alignment : HorizontalAlignment.CENTER;
+        HorizontalAlignment oldAlignment = horizontalAlignment;
+        horizontalAlignment = newAlignment;
+        contentLabel.setHorizontalAlignment(newAlignment.getSwingConstant());
+        firePropertyChange("horizontalAlignment", oldAlignment, newAlignment);
+        refreshTextLayout();
+    }
+
+    @Override
+    public HorizontalAlignment getHorizontalAlignment() {
+        return horizontalAlignment;
+    }
+
+    /**
+     * Define la alineacion vertical del contenido dentro del boton.
+     *
+     * @param alignment alineacion vertical; CENTER cuando es null
+     */
+    @Override
+    public void setVerticalAlignment(VerticalAlignment alignment) {
+        VerticalAlignment newAlignment = alignment != null ? alignment : VerticalAlignment.CENTER;
+        VerticalAlignment oldAlignment = verticalAlignment;
+        verticalAlignment = newAlignment;
+        contentLabel.setVerticalAlignment(newAlignment.getSwingConstant());
+        firePropertyChange("verticalAlignment", oldAlignment, newAlignment);
+        refreshTextLayout();
+    }
+
+    @Override
+    public VerticalAlignment getVerticalAlignment() {
+        return verticalAlignment;
+    }
+
+    /**
+     * Define la posicion horizontal del texto con respecto al icono.
+     *
+     * @param position posicion horizontal; RIGHT cuando es null
+     */
+    @Override
+    public void setHorizontalTextPosition(HorizontalTextPosition position) {
+        HorizontalTextPosition newPosition = position != null ? position : HorizontalTextPosition.RIGHT;
+        HorizontalTextPosition oldPosition = horizontalTextPosition;
+        horizontalTextPosition = newPosition;
+        contentLabel.setHorizontalTextPosition(newPosition.getSwingConstant());
+        firePropertyChange("horizontalTextPosition", oldPosition, newPosition);
+        refreshTextLayout();
+    }
+
+    @Override
+    public HorizontalTextPosition getHorizontalTextPosition() {
+        return horizontalTextPosition;
+    }
+
+    /**
+     * Define la posicion vertical del texto con respecto al icono.
+     *
+     * @param position posicion vertical; CENTER cuando es null
+     */
+    @Override
+    public void setVerticalTextPosition(VerticalTextPosition position) {
+        VerticalTextPosition newPosition = position != null ? position : VerticalTextPosition.CENTER;
+        VerticalTextPosition oldPosition = verticalTextPosition;
+        verticalTextPosition = newPosition;
+        contentLabel.setVerticalTextPosition(newPosition.getSwingConstant());
+        firePropertyChange("verticalTextPosition", oldPosition, newPosition);
+        refreshTextLayout();
+    }
+
+    @Override
+    public VerticalTextPosition getVerticalTextPosition() {
+        return verticalTextPosition;
+    }
+
     public void setOnClick(Runnable onClick) {
         actionDelegate.setOnClick(onClick);
     }
@@ -221,6 +304,12 @@ public final class ShButton extends BaseContainer implements Buttonable {
         repaint();
     }
 
+    private void refreshTextLayout() {
+        contentLabel.setText(toDisplayText(buttonText));
+        revalidate();
+        repaint();
+    }
+
     private String toDisplayText(String text) {
         if (text == null || text.isEmpty()) {
             return "";
@@ -232,9 +321,17 @@ public final class ShButton extends BaseContainer implements Buttonable {
         if (!normalized.contains("\n")) {
             return text;
         }
-        return "<html><div style='text-align:center;'>"
+        return "<html><div style='text-align:" + resolveTextAlignment() + ";'>"
                 + escapeHtml(normalized).replace("\n", "<br>")
                 + "</div></html>";
+    }
+
+    private String resolveTextAlignment() {
+        return switch (horizontalAlignment) {
+            case LEFT, LEADING -> "left";
+            case RIGHT, TRAILING -> "right";
+            default -> "center";
+        };
     }
 
     private String escapeHtml(String text) {

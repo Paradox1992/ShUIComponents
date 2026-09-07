@@ -74,6 +74,21 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         styleDelegate.applyTheme(TableTheme.SHUI);
         refreshStyle();
         updatePaginationState(null);
+        searchDelegate.setEnabled(isEnabled());
+    }
+
+    /**
+     * Habilita o deshabilita tambien la barra de busqueda y su boton.
+     *
+     * @param enabled true para habilitar el componente
+     */
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        // Swing puede invocar este metodo antes de inicializar los delegados.
+        if (searchDelegate != null) {
+            searchDelegate.setEnabled(enabled);
+        }
     }
 
     @Override
@@ -355,6 +370,44 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     @Override
     public boolean isSearchBoxVisible() {
         return searchDelegate.isSearchBoxVisible();
+    }
+
+    /**
+     * Muestra u oculta el boton junto a la busqueda, oculto por defecto.
+     * Su visibilidad es independiente de la barra de busqueda.
+     *
+     * @param visible true para mostrar el boton
+     */
+    public void setSearchButtonVisible(boolean visible) {
+        searchDelegate.setSearchButtonVisible(visible);
+        revalidate();
+        repaint();
+    }
+
+    public boolean isSearchButtonVisible() {
+        return searchDelegate.isSearchButtonVisible();
+    }
+
+    public void setSearchButtonText(String text) {
+        searchDelegate.setSearchButtonText(text);
+    }
+
+    public String getSearchButtonText() {
+        return searchDelegate.getSearchButtonText();
+    }
+
+    /**
+     * Configura la accion del boton. Se ejecuta en el hilo de eventos de Swing.
+     * Un valor null elimina la accion previamente configurada.
+     *
+     * @param onSearchButtonClick accion a ejecutar al pulsar el boton
+     */
+    public void setOnSearchButtonClick(Runnable onSearchButtonClick) {
+        searchDelegate.setOnSearchButtonClick(onSearchButtonClick);
+    }
+
+    public Runnable getOnSearchButtonClick() {
+        return searchDelegate.getOnSearchButtonClick();
     }
 
     @Override

@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
- * Regla publica para pintar filas o celdas segun el valor de una columna.
+ * Regla inmutable para pintar filas o celdas segun el valor de una columna.
  */
 public final class ModelRender {
 
@@ -36,9 +36,12 @@ public final class ModelRender {
 
     private ModelRender(Object validator, Predicate<Object> matcher, Color background,
             Color foreground, int column, RenderTarget target) {
+        if (column < ANY_COLUMN) {
+            throw new IllegalArgumentException("column debe ser -1 o un indice valido");
+        }
         this.validator = validator;
         this.matcher = matcher;
-        this.background = background != null ? background : Color.WHITE;
+        this.background = Objects.requireNonNull(background, "background");
         this.foreground = foreground;
         this.column = column;
         this.target = target != null ? target : RenderTarget.CELL;
@@ -88,6 +91,11 @@ public final class ModelRender {
         return validator;
     }
 
+    /**
+     * @return Color
+     * @deprecated use {@link #getBackground()}.
+     */
+    @Deprecated
     public Color getColor() {
         return background;
     }
@@ -100,6 +108,11 @@ public final class ModelRender {
         return foreground;
     }
 
+    /**
+     * @return Color
+     * @deprecated use {@link #getColumn()}.
+     */
+    @Deprecated
     public int getCol() {
         return column;
     }

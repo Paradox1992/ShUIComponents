@@ -8,8 +8,6 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JTable;
@@ -17,7 +15,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 
 /**
- * Renderer para mostrar estados como etiquetas dentro de las celdas.
+ * Renderer condicional para mostrar estados en celdas o filas.
+ *
+ * <p>La alineacion de columnas pertenece a {@code ShTable}; este renderer se
+ * limita a aplicar las reglas visuales.</p>
  */
 public class StatusCellRenderer extends BasicRenderer {
 
@@ -31,9 +32,9 @@ public class StatusCellRenderer extends BasicRenderer {
 
     public StatusCellRenderer addRenders(ModelRender... rules) {
         if (rules != null) {
-            Arrays.stream(rules)
-                    .filter(rule -> rule != null)
-                    .forEach(renders::add);
+            for (ModelRender rule : rules) {
+                addRender(rule);
+            }
         }
         return this;
     }
@@ -51,12 +52,7 @@ public class StatusCellRenderer extends BasicRenderer {
     }
 
     public List<ModelRender> getRenders() {
-        return Collections.unmodifiableList(renders);
-    }
-
-    public StatusCellRenderer centerCols(int... indexCols) {
-        setCenteredColumns(indexCols);
-        return this;
+        return List.copyOf(renders);
     }
 
     @Override
@@ -112,7 +108,7 @@ public class StatusCellRenderer extends BasicRenderer {
     private ModelRender findRule(JTable table, Object currentValue, int viewRow, int viewColumn) {
         int modelColumn = table != null ? table.convertColumnIndexToModel(viewColumn) : viewColumn;
         for (ModelRender rule : renders) {
-            if (rule.getTarget() == RenderTarget.CELL && rule.getColumn() != modelColumn) {
+            if (!appliesToCell(rule, modelColumn)) {
                 continue;
             }
             if (matchesRule(table, currentValue, viewRow, modelColumn, rule)) {
@@ -122,10 +118,18 @@ public class StatusCellRenderer extends BasicRenderer {
         return null;
     }
 
+    private boolean appliesToCell(ModelRender rule, int modelColumn) {
+        return rule.getTarget() == RenderTarget.ROW
+                || rule.getColumn() == ModelRender.ANY_COLUMN
+                || rule.getColumn() == modelColumn;
+    }
+
     private boolean matchesRule(JTable table, Object currentValue, int viewRow,
             int currentModelColumn, ModelRender rule) {
         if (rule.getColumn() == ModelRender.ANY_COLUMN) {
-            return matchesAnyColumn(table, currentValue, viewRow, rule);
+            return rule.getTarget() == RenderTarget.CELL
+                    ? rule.matches(currentValue)
+                    : matchesAnyColumn(table, currentValue, viewRow, rule);
         }
         Object value = valueAt(table, viewRow, currentModelColumn, rule.getColumn(), currentValue);
         return rule.matches(value);
@@ -204,7 +208,11 @@ public class StatusCellRenderer extends BasicRenderer {
     }
 
     private void applyRule(Component cell, ModelRender rule) {
-        contentBackground = rule.getBackground();
+        if (rule.getTarget() == RenderTarget.ROW) {
+            cell.setBackground(rule.getBackground());
+        } else {
+            contentBackground = rule.getBackground();
+        }
         Color color = rule.getForeground() != null
                 ? rule.getForeground()
                 : RenderColor.statusForeground(rule.getBackground());

@@ -369,6 +369,17 @@ public class ShDateSelector extends BaseContainer {
                 : null;
     }
 
+    /**
+     * Obtiene la fecha seleccionada en formato {@code yyyy-MM-dd}.
+     *
+     * @return fecha formateada o {@code null} si no hay una fecha seleccionada
+     */
+    public String getDateString() {
+        return selectedDate != null
+                ? DateTimeFormatter.ISO_LOCAL_DATE.format(selectedDate)
+                : null;
+    }
+
     public void setText(String text) {
         if (text == null || text.isBlank()) {
             setSelectedDate(null);

@@ -3,8 +3,6 @@ package com.shcomponentes.renderedModels;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -12,8 +10,7 @@ import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 
 /**
- * Renderizador base para JTable con estilos consistentes y alineacion por
- * columnas.
+ * Renderizador base para JTable con estilos consistentes.
  */
 public abstract class BasicRenderer extends DefaultTableCellRenderer {
 
@@ -24,18 +21,6 @@ public abstract class BasicRenderer extends DefaultTableCellRenderer {
     protected static final Color DEFAULT_SELECTION_FOREGROUND = Color.WHITE;
     protected static final Color DEFAULT_FOREGROUND = new Color(33, 37, 41);
 
-    private final Set<Integer> centeredColumns = new LinkedHashSet<>();
-
-    protected final void setCenteredColumns(int... columns) {
-        centeredColumns.clear();
-        if (columns == null) {
-            return;
-        }
-        for (int column : columns) {
-            centeredColumns.add(column);
-        }
-    }
-
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
             boolean hasFocus, int row, int column) {
@@ -45,9 +30,7 @@ public abstract class BasicRenderer extends DefaultTableCellRenderer {
         label.setOpaque(true);
         label.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
         label.setFont(resolveFont(table));
-        label.setHorizontalAlignment(isCentered(table, column)
-                ? SwingConstants.CENTER
-                : SwingConstants.LEFT);
+        label.setHorizontalAlignment(SwingConstants.LEFT);
 
         if (isSelected) {
             label.setBackground(resolveSelectionBackground(table));
@@ -58,14 +41,6 @@ public abstract class BasicRenderer extends DefaultTableCellRenderer {
         }
 
         return label;
-    }
-
-    private boolean isCentered(JTable table, int viewColumn) {
-        if (centeredColumns.isEmpty()) {
-            return false;
-        }
-        int modelColumn = table != null ? table.convertColumnIndexToModel(viewColumn) : viewColumn;
-        return centeredColumns.contains(ModelRender.ANY_COLUMN) || centeredColumns.contains(modelColumn);
     }
 
     private static Font resolveFont(JTable table) {

@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -31,13 +32,16 @@ public class TableSearchDelegate<T> {
     private final ShTableModel<T> model;
     private final TableRowSorter<ShTableModel<T>> rowSorter;
     private final JPanel searchPanel = new JPanel(new BorderLayout(6, 0));
+    private final JPanel searchControlsPanel = new JPanel(new BorderLayout(6, 0));
     private final JPanel searchBoxPanel = new JPanel(new BorderLayout(4, 0));
+    private final JButton searchButton = new JButton("Accion");
     private final JLabel searchIconLabel = new JLabel();
     private final PlaceholderTextField searchField = new PlaceholderTextField();
 
     private int filterColumn = -1;
     private int lastAppliedColumn = Integer.MIN_VALUE;
     private String lastAppliedText;
+    private Runnable onSearchButtonClick;
 
     public TableSearchDelegate(ShTableModel<T> model, TableRowSorter<ShTableModel<T>> rowSorter) {
         this.model = model;
@@ -49,16 +53,57 @@ public class TableSearchDelegate<T> {
         return searchPanel;
     }
 
+    public void setEnabled(boolean enabled) {
+        searchPanel.setEnabled(enabled);
+        searchControlsPanel.setEnabled(enabled);
+        searchBoxPanel.setEnabled(enabled);
+        searchIconLabel.setEnabled(enabled);
+        searchField.setEnabled(enabled);
+        searchButton.setEnabled(enabled);
+    }
+
     public int getFilteredRowCount() {
         return rowSorter.getViewRowCount();
     }
 
     public void setSearchBoxVisible(boolean visible) {
-        searchPanel.setVisible(visible);
+        searchBoxPanel.setVisible(visible);
+        refreshVisibility();
     }
 
     public boolean isSearchBoxVisible() {
-        return searchPanel.isVisible();
+        return searchBoxPanel.isVisible();
+    }
+
+    public void setSearchButtonVisible(boolean visible) {
+        searchButton.setVisible(visible);
+        refreshVisibility();
+    }
+
+    public boolean isSearchButtonVisible() {
+        return searchButton.isVisible();
+    }
+
+    public void setSearchButtonText(String text) {
+        searchButton.setText(text != null ? text : "");
+    }
+
+    public String getSearchButtonText() {
+        return searchButton.getText();
+    }
+
+    public void setOnSearchButtonClick(Runnable onSearchButtonClick) {
+        this.onSearchButtonClick = onSearchButtonClick;
+    }
+
+    public Runnable getOnSearchButtonClick() {
+        return onSearchButtonClick;
+    }
+
+    private void refreshVisibility() {
+        searchPanel.setVisible(searchBoxPanel.isVisible() || searchButton.isVisible());
+        searchPanel.revalidate();
+        searchPanel.repaint();
     }
 
     public void setSearchPlaceholder(String placeholder) {
@@ -108,6 +153,15 @@ public class TableSearchDelegate<T> {
     private void configure() {
         searchPanel.setOpaque(false);
         searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        searchControlsPanel.setOpaque(false);
+
+        searchButton.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        searchButton.setVisible(false);
+        searchButton.addActionListener(event -> {
+            if (onSearchButtonClick != null) {
+                onSearchButtonClick.run();
+            }
+        });
 
         searchBoxPanel.setOpaque(false);
         searchBoxPanel.setPreferredSize(new Dimension(460, 34));
@@ -142,7 +196,9 @@ public class TableSearchDelegate<T> {
 
         searchBoxPanel.add(searchIconLabel, BorderLayout.WEST);
         searchBoxPanel.add(searchField, BorderLayout.CENTER);
-        searchPanel.add(searchBoxPanel, BorderLayout.WEST);
+        searchControlsPanel.add(searchBoxPanel, BorderLayout.CENTER);
+        searchControlsPanel.add(searchButton, BorderLayout.EAST);
+        searchPanel.add(searchControlsPanel, BorderLayout.WEST);
     }
 
     private void applyFilter() {

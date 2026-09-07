@@ -11,6 +11,7 @@ public class ShTableBeanInfo extends ShBeanInfoSupport {
                     "tableTheme", "bootstrapTheme", "stripedRows", "tableHeaders",
                     "paged", "pagedMode", "pageHandler",
                     "searchBoxVisible", "searchPlaceholder", "filterColumn",
+                    "searchButtonVisible", "searchButtonText", "onSearchButtonClick",
                     "headerBackground", "headerForeground", "headerFont",
                     "contentFont", "tableBackground", "cellForeground",
                     "selectionBackground", "selectionForeground", "gridColor",

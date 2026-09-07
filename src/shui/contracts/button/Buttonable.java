@@ -2,6 +2,7 @@ package shui.contracts.button;
 
 import java.awt.Color;
 import javax.swing.Icon;
+import javax.swing.SwingConstants;
 
 /**
  * Contrato para botones Shui que no dependen de JButton.
@@ -48,6 +49,74 @@ public interface Buttonable {
         }
     }
 
+    enum HorizontalAlignment {
+        LEFT(SwingConstants.LEFT),
+        CENTER(SwingConstants.CENTER),
+        RIGHT(SwingConstants.RIGHT),
+        LEADING(SwingConstants.LEADING),
+        TRAILING(SwingConstants.TRAILING);
+
+        private final int swingConstant;
+
+        HorizontalAlignment(int swingConstant) {
+            this.swingConstant = swingConstant;
+        }
+
+        public int getSwingConstant() {
+            return swingConstant;
+        }
+    }
+
+    enum VerticalAlignment {
+        TOP(SwingConstants.TOP),
+        CENTER(SwingConstants.CENTER),
+        BOTTOM(SwingConstants.BOTTOM);
+
+        private final int swingConstant;
+
+        VerticalAlignment(int swingConstant) {
+            this.swingConstant = swingConstant;
+        }
+
+        public int getSwingConstant() {
+            return swingConstant;
+        }
+    }
+
+    enum HorizontalTextPosition {
+        LEFT(SwingConstants.LEFT),
+        CENTER(SwingConstants.CENTER),
+        RIGHT(SwingConstants.RIGHT),
+        LEADING(SwingConstants.LEADING),
+        TRAILING(SwingConstants.TRAILING);
+
+        private final int swingConstant;
+
+        HorizontalTextPosition(int swingConstant) {
+            this.swingConstant = swingConstant;
+        }
+
+        public int getSwingConstant() {
+            return swingConstant;
+        }
+    }
+
+    enum VerticalTextPosition {
+        TOP(SwingConstants.TOP),
+        CENTER(SwingConstants.CENTER),
+        BOTTOM(SwingConstants.BOTTOM);
+
+        private final int swingConstant;
+
+        VerticalTextPosition(int swingConstant) {
+            this.swingConstant = swingConstant;
+        }
+
+        public int getSwingConstant() {
+            return swingConstant;
+        }
+    }
+
     void setButtonText(String text);
 
     String getButtonText();
@@ -79,6 +148,22 @@ public interface Buttonable {
     void setCustomForeground(Color color);
 
     Color getCustomForeground();
+
+    void setHorizontalAlignment(HorizontalAlignment alignment);
+
+    HorizontalAlignment getHorizontalAlignment();
+
+    void setVerticalAlignment(VerticalAlignment alignment);
+
+    VerticalAlignment getVerticalAlignment();
+
+    void setHorizontalTextPosition(HorizontalTextPosition position);
+
+    HorizontalTextPosition getHorizontalTextPosition();
+
+    void setVerticalTextPosition(VerticalTextPosition position);
+
+    VerticalTextPosition getVerticalTextPosition();
 
     void doClick();
 }
