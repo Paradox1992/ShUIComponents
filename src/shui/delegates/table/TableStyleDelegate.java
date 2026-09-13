@@ -5,20 +5,14 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.Objects;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
-import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
@@ -75,10 +69,6 @@ public class TableStyleDelegate {
             scrollPane.setOpaque(false);
             scrollPane.getViewport().setOpaque(true);
             scrollPane.getViewport().setBackground(tableBackground);
-            scrollPane.getVerticalScrollBar().setUI(new ModernScrollBarUI());
-            scrollPane.getHorizontalScrollBar().setUI(new ModernScrollBarUI());
-            scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(6, 6));
-            scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(6, 6));
         }
     }
 
@@ -354,41 +344,4 @@ public class TableStyleDelegate {
                 .anyMatch(index -> index == -1 || index == modelColumn);
     }
 
-    private static class ModernScrollBarUI extends BasicScrollBarUI {
-
-        @Override
-        protected void configureScrollBarColors() {
-            thumbColor = new Color(160, 160, 160);
-            trackColor = new Color(245, 245, 245);
-        }
-
-        @Override
-        protected JButton createDecreaseButton(int orientation) {
-            return createZeroButton();
-        }
-
-        @Override
-        protected JButton createIncreaseButton(int orientation) {
-            return createZeroButton();
-        }
-
-        @Override
-        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-            if (thumbBounds.isEmpty() || !scrollbar.isEnabled()) {
-                return;
-            }
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setColor(thumbColor);
-            g2.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, 6, 6);
-            g2.dispose();
-        }
-
-        private JButton createZeroButton() {
-            JButton button = new JButton();
-            button.setPreferredSize(new Dimension(0, 0));
-            button.setMinimumSize(new Dimension(0, 0));
-            button.setMaximumSize(new Dimension(0, 0));
-            return button;
-        }
-    }
 }

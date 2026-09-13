@@ -2,6 +2,7 @@ package shui.repositories.text;
 
 import com.ShDateSelectors.ShDateSelector;
 import com.ShContainers.ShPanel;
+import com.ShImageChoosers.ShImageChooser;
 import com.ShInputs.ShInput;
 import java.awt.Component;
 import java.awt.Container;
@@ -41,13 +42,19 @@ final class ShInputValidationRepository implements ShInputValidator {
         visitFields(panel, Collections.emptySet(), field -> {
             if (field instanceof ShInput input) {
                 clearInput(input);
+            } else if (field instanceof ShDateSelector dateSelector) {
+                dateSelector.clear();
+            } else if (field instanceof ShImageChooser imageChooser) {
+                imageChooser.setSelectedFile(null);
             }
         });
     }
     
     private void visitFields(Container container, Set<Component> excluded, FormFieldVisitor visitor) {
         for (Component component : container.getComponents()) {
-            if ((component instanceof ShInput || component instanceof ShDateSelector)
+            if ((component instanceof ShInput
+                    || component instanceof ShDateSelector
+                    || component instanceof ShImageChooser)
                     && !excluded.contains(component)) {
                 visitor.visit(component);
             }

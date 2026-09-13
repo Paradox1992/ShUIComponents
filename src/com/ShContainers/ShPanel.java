@@ -51,6 +51,7 @@ public class ShPanel extends BaseContainer implements ShInputFormable, FormMode 
     private static final int BLURR_BACKDROP_RADIUS = 4;
 
     private ShPanelStyle panelStyle = ShPanelStyle.DEFAULT;
+    private boolean styleBackgroundOpaque = true;
     private Mode formMode = Mode.CREATE;
     private boolean paintingBackdropSnapshot;
 
@@ -71,6 +72,29 @@ public class ShPanel extends BaseContainer implements ShInputFormable, FormMode 
 
     public ShPanelStyle getPanelStyle() {
         return panelStyle;
+    }
+
+    /**
+     * Define si los presets visuales deben pintar una superficie completamente
+     * opaca. Se mantiene activo por defecto para que el panel pueda utilizarse
+     * como raiz de una ventana transparente sin revelar el escritorio.
+     *
+     * <p>Desactivarlo permite recuperar la translucidez original de los
+     * presets que utilizan alpha cuando el panel se coloca sobre otra
+     * superficie Swing que ya pinta el fondo.</p>
+     *
+     * @param opaque {@code true} para garantizar una base opaca
+     */
+    public void setStyleBackgroundOpaque(boolean opaque) {
+        if (styleBackgroundOpaque == opaque) {
+            return;
+        }
+        styleBackgroundOpaque = opaque;
+        applyPanelStyle();
+    }
+
+    public boolean isStyleBackgroundOpaque() {
+        return styleBackgroundOpaque;
     }
 
     /**
@@ -180,8 +204,9 @@ public class ShPanel extends BaseContainer implements ShInputFormable, FormMode 
 
     private void applyLiquidGlassStyle() {
         setCornerRadius(24);
-        setBackgroundColor(new Color(255, 255, 255, 150));
-        setGradient(new Color(255, 255, 255, 210), new Color(215, 235, 255, 120),
+        setBackgroundColor(styleSurfaceColor(255, 255, 255, 150));
+        setGradient(styleSurfaceColor(255, 255, 255, 210),
+                styleSurfaceColor(215, 235, 255, 120),
                 GradientDirection.DIAGONAL_RIGHT);
         setBorderGradient(new Color(255, 255, 255, 230), new Color(126, 212, 255, 120));
         setBorderWidth(1.2f);
@@ -193,8 +218,9 @@ public class ShPanel extends BaseContainer implements ShInputFormable, FormMode 
 
     private void applyBlurrStyle() {
         setCornerRadius(20);
-        setBackgroundColor(new Color(245, 248, 255, 55));
-        setGradient(new Color(250, 252, 255, 82), new Color(232, 238, 248, 54),
+        setBackgroundColor(styleSurfaceColor(245, 248, 255, 55));
+        setGradient(styleSurfaceColor(250, 252, 255, 82),
+                styleSurfaceColor(232, 238, 248, 54),
                 GradientDirection.VERTICAL);
         setBorderGradient(new Color(255, 255, 255, 220), new Color(142, 166, 205, 130));
         setBorderWidth(1.2f);
@@ -206,7 +232,7 @@ public class ShPanel extends BaseContainer implements ShInputFormable, FormMode 
 
     private void applyPlasmaStyle() {
         setCornerRadius(22);
-        setBackgroundColor(new Color(20, 10, 48, 245));
+        setBackgroundColor(styleSurfaceColor(20, 10, 48, 245));
         setGradient(new Color(34, 9, 77), new Color(0, 94, 154), GradientDirection.DIAGONAL_RIGHT);
         setBorderGradient(new Color(255, 79, 216, 210), new Color(0, 241, 255, 210));
         setBorderWidth(1.4f);
@@ -214,6 +240,11 @@ public class ShPanel extends BaseContainer implements ShInputFormable, FormMode 
         setInnerShadow(new Color(255, 255, 255, 35), 6);
         setHoverEnabled(true);
         setHoverColor(new Color(255, 255, 255, 28));
+    }
+
+    private Color styleSurfaceColor(int red, int green, int blue, int translucentAlpha) {
+        int alpha = styleBackgroundOpaque ? 255 : translucentAlpha;
+        return new Color(red, green, blue, alpha);
     }
 
     private void paintLiquidGlass(Graphics2D g2, Shape shape) {

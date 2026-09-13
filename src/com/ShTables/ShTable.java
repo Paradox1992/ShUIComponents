@@ -2,6 +2,7 @@ package com.ShTables;
 
 import com.ShContainers.ShPanel;
 import com.ShPopups.ShPopupMenu;
+import com.ShScrolls.ShScrollBar;
 import com.requestsupport.interfaces.RowMapper;
 import com.requestsupport.responses.PaginatedApiResponse;
 import com.requestsupport.responses.PaginationMeta;
@@ -37,6 +38,8 @@ import javax.swing.table.TableRowSorter;
 public class ShTable<T> extends ShPanel implements Tableable<T> {
 
     private final JTable table = new JTable();
+    private final ShScrollBar verticalScrollBar = new ShScrollBar(ShScrollBar.VERTICAL);
+    private final ShScrollBar horizontalScrollBar = new ShScrollBar(ShScrollBar.HORIZONTAL);
     private final JScrollPane scrollPane = new JScrollPane(table);
     private final ShTableModel<T> model = new ShTableModel<>();
     private final TableDataDelegate dataDelegate = new TableDataDelegate();
@@ -64,6 +67,8 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
         table.setModel(model);
         table.setRowSorter(rowSorter);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        scrollPane.setVerticalScrollBar(verticalScrollBar);
+        scrollPane.setHorizontalScrollBar(horizontalScrollBar);
         interactionDelegate.install(table);
         paginationDelegate.addPageRequestHandler(this::updateRequestedPage);
 
@@ -189,7 +194,7 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     }
 
     public T getSelectedItem() {
-        return selectionDelegate.getSelectedItem();
+        return  selectionDelegate.getSelectedItem();
     }
 
     public int getSelectedModelRow() {
@@ -240,6 +245,165 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     @Override
     public JTable getTable() {
         return table;
+    }
+
+    /**
+     * Color del pulgar compartido por ambas barras; null restaura el
+     * predeterminado.
+     */
+    public void setScrollBarThumbColor(Color color) {
+        Color old = getScrollBarThumbColor();
+        verticalScrollBar.setThumbColor(color);
+        horizontalScrollBar.setThumbColor(color);
+        firePropertyChange("scrollBarThumbColor", old, getScrollBarThumbColor());
+    }
+
+    public Color getScrollBarThumbColor() {
+        return verticalScrollBar.getThumbColor();
+    }
+
+    /**
+     * Color de la pista compartido por ambas barras; null restaura el
+     * predeterminado.
+     */
+    public void setScrollBarTrackColor(Color color) {
+        Color old = getScrollBarTrackColor();
+        verticalScrollBar.setTrackColor(color);
+        horizontalScrollBar.setTrackColor(color);
+        firePropertyChange("scrollBarTrackColor", old, getScrollBarTrackColor());
+    }
+
+    public Color getScrollBarTrackColor() {
+        return verticalScrollBar.getTrackColor();
+    }
+
+    /**
+     * Grosor de ambas barras en pixeles, con un minimo de 2.
+     */
+    public void setScrollBarSize(int size) {
+        int old = getScrollBarSize();
+        verticalScrollBar.setScrollBarSize(size);
+        horizontalScrollBar.setScrollBarSize(size);
+        firePropertyChange("scrollBarSize", old, getScrollBarSize());
+        revalidate();
+    }
+
+    public int getScrollBarSize() {
+        return verticalScrollBar.getScrollBarSize();
+    }
+
+    /**
+     * Longitud minima del pulgar en ambas barras, con un minimo de 4 pixeles.
+     */
+    public void setScrollBarMinimumThumbLength(int length) {
+        int old = getScrollBarMinimumThumbLength();
+        verticalScrollBar.setMinimumThumbLength(length);
+        horizontalScrollBar.setMinimumThumbLength(length);
+        firePropertyChange("scrollBarMinimumThumbLength", old, getScrollBarMinimumThumbLength());
+    }
+
+    public int getScrollBarMinimumThumbLength() {
+        return verticalScrollBar.getMinimumThumbLength();
+    }
+
+    /**
+     * Redondeado del pulgar de ambas barras; los valores negativos se ajustan a
+     * cero.
+     */
+    public void setScrollBarThumbArc(int arc) {
+        int old = getScrollBarThumbArc();
+        verticalScrollBar.setThumbArc(arc);
+        horizontalScrollBar.setThumbArc(arc);
+        firePropertyChange("scrollBarThumbArc", old, getScrollBarThumbArc());
+    }
+
+    public int getScrollBarThumbArc() {
+        return verticalScrollBar.getThumbArc();
+    }
+
+    /**
+     * Redondeado de la pista de ambas barras; los valores negativos se ajustan
+     * a cero.
+     */
+    public void setScrollBarTrackArc(int arc) {
+        int old = getScrollBarTrackArc();
+        verticalScrollBar.setTrackArc(arc);
+        horizontalScrollBar.setTrackArc(arc);
+        firePropertyChange("scrollBarTrackArc", old, getScrollBarTrackArc());
+    }
+
+    public int getScrollBarTrackArc() {
+        return verticalScrollBar.getTrackArc();
+    }
+
+    /**
+     * Margen interior del pulgar de ambas barras, como minimo cero pixeles.
+     */
+    public void setScrollBarThumbInset(int inset) {
+        int old = getScrollBarThumbInset();
+        verticalScrollBar.setThumbInset(inset);
+        horizontalScrollBar.setThumbInset(inset);
+        firePropertyChange("scrollBarThumbInset", old, getScrollBarThumbInset());
+    }
+
+    public int getScrollBarThumbInset() {
+        return verticalScrollBar.getThumbInset();
+    }
+
+    /**
+     * Muestra u oculta los botones de flecha de ambas barras.
+     */
+    public void setScrollBarButtonsVisible(boolean visible) {
+        boolean old = isScrollBarButtonsVisible();
+        verticalScrollBar.setButtonsVisible(visible);
+        horizontalScrollBar.setButtonsVisible(visible);
+        firePropertyChange("scrollBarButtonsVisible", old, isScrollBarButtonsVisible());
+        revalidate();
+    }
+
+    public boolean isScrollBarButtonsVisible() {
+        return verticalScrollBar.isButtonsVisible();
+    }
+
+    /**
+     * Politica JScrollPane.VERTICAL_SCROLLBAR_*; por defecto AS_NEEDED.
+     */
+    public void setVerticalScrollBarPolicy(int policy) {
+        int old = getVerticalScrollBarPolicy();
+        scrollPane.setVerticalScrollBarPolicy(policy);
+        firePropertyChange("verticalScrollBarPolicy", old, getVerticalScrollBarPolicy());
+    }
+
+    public int getVerticalScrollBarPolicy() {
+        return scrollPane.getVerticalScrollBarPolicy();
+    }
+
+    /**
+     * Politica JScrollPane.HORIZONTAL_SCROLLBAR_*; por defecto AS_NEEDED.
+     */
+    public void setHorizontalScrollBarPolicy(int policy) {
+        int old = getHorizontalScrollBarPolicy();
+        scrollPane.setHorizontalScrollBarPolicy(policy);
+        firePropertyChange("horizontalScrollBarPolicy", old, getHorizontalScrollBarPolicy());
+    }
+
+    public int getHorizontalScrollBarPolicy() {
+        return scrollPane.getHorizontalScrollBarPolicy();
+    }
+
+    /**
+     * Modo JTable.AUTO_RESIZE_*; conserva AUTO_RESIZE_SUBSEQUENT_COLUMNS por
+     * defecto. AUTO_RESIZE_OFF permite desplazar horizontalmente columnas mas
+     * anchas que el viewport.
+     */
+    public void setTableAutoResizeMode(int mode) {
+        int old = getTableAutoResizeMode();
+        table.setAutoResizeMode(mode);
+        firePropertyChange("tableAutoResizeMode", old, getTableAutoResizeMode());
+    }
+
+    public int getTableAutoResizeMode() {
+        return table.getAutoResizeMode();
     }
 
     @Override
@@ -373,8 +537,8 @@ public class ShTable<T> extends ShPanel implements Tableable<T> {
     }
 
     /**
-     * Muestra u oculta el boton junto a la busqueda, oculto por defecto.
-     * Su visibilidad es independiente de la barra de busqueda.
+     * Muestra u oculta el boton junto a la busqueda, oculto por defecto. Su
+     * visibilidad es independiente de la barra de busqueda.
      *
      * @param visible true para mostrar el boton
      */

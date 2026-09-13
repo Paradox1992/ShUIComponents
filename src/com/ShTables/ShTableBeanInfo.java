@@ -17,6 +17,10 @@ public class ShTableBeanInfo extends ShBeanInfoSupport {
                     "selectionBackground", "selectionForeground", "gridColor",
                     "alternateRowBackground", "tableRowHeight",
                     "showHorizontalLines", "showVerticalLines", "centerContentColumns",
+                    "scrollBarThumbColor", "scrollBarTrackColor", "scrollBarSize",
+                    "scrollBarMinimumThumbLength", "scrollBarThumbArc", "scrollBarTrackArc",
+                    "scrollBarThumbInset", "scrollBarButtonsVisible",
+                    "verticalScrollBarPolicy", "horizontalScrollBarPolicy", "tableAutoResizeMode",
                     "popupMenu"
                 },
                 "context", "menu", "scroll", "table", "onTableClick");
