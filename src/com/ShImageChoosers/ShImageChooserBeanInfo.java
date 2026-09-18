@@ -8,7 +8,7 @@ public class ShImageChooserBeanInfo extends ShBeanInfoSupport {
         super(ShImageChooser.class, "ShImageChooser", "Selector Shui para buscar y mostrar imagenes.",
                 "/shui/assets/imagen.png",
                 new String[]{
-                    "imagen", "selectedFile", "imageScale",
+                    "imagen", "imagenCambiada", "selectedFile", "imageScale",
                     "buttonText", "buttonType", "actionButton", "bootstrapButton",
                     "iconSize", "customIcon", "customColor", "customForeground",
                     "buttonFont", "iconTextGap",

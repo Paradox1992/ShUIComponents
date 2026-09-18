@@ -4,7 +4,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
@@ -23,6 +27,10 @@ public final class ShImageChooserTest {
         preservesTransparencyAsPng();
         returnsNullWithoutImage();
         validatesOptimizationOptions();
+        tracksPendingImageChanges();
+        loadingBase64ResetsChanges();
+        failedLoadingPreservesChanges();
+        selectingAndClearingFileMarksChanges();
     }
 
     private static void displaysPlainBase64Image() throws IOException {
@@ -123,6 +131,76 @@ public final class ShImageChooserTest {
             throw new AssertionError("Se esperaba IllegalArgumentException");
         } catch (IllegalArgumentException expected) {
             // Resultado esperado.
+        }
+    }
+
+    private static void tracksPendingImageChanges() throws IOException {
+        ShImageChooser chooser = new ShImageChooser();
+        List<Boolean> changes = new ArrayList<>();
+        chooser.addPropertyChangeListener("imagenCambiada", event ->
+                changes.add((Boolean) event.getNewValue()));
+        assertEquals(false, chooser.isImagenCambiada(), "estado inicial");
+        chooser.setImagenBase64(createPngBase64());
+        assertEquals(false, chooser.isImagenCambiada(), "carga desde API");
+        chooser.setImagen(chooser.getImagen());
+        assertEquals(false, chooser.isImagenCambiada(), "mismo icono");
+
+        chooser.setImagen(new ImageIcon(new BufferedImage(3, 2, BufferedImage.TYPE_INT_RGB)));
+        assertEquals(true, chooser.isImagenCambiada(), "imagen reemplazada");
+        chooser.getImagenBase64();
+        chooser.setImagen(chooser.getImagen());
+        assertEquals(true, chooser.isImagenCambiada(), "cambio pendiente tras exportar");
+        chooser.setImagenCambiada(false);
+        assertEquals(false, chooser.isImagenCambiada(), "guardado confirmado");
+        chooser.setImagen(null);
+        assertEquals(true, chooser.isImagenCambiada(), "imagen eliminada");
+        chooser.setImagenCambiada(false);
+        chooser.setImagen(null);
+        assertEquals(false, chooser.isImagenCambiada(), "imagen ya vacia");
+        assertEquals(List.of(true, false, true, false), changes, "eventos de cambio");
+    }
+
+    private static void loadingBase64ResetsChanges() throws IOException {
+        ShImageChooser chooser = new ShImageChooser();
+        for (String content : new String[]{createPngBase64(),
+                "data:image/png;base64," + createPngBase64(), "  ", null}) {
+            chooser.setImagenCambiada(true);
+            chooser.setImagenBase64(content);
+            assertEquals(false, chooser.isImagenCambiada(), "nueva carga limpia");
+        }
+    }
+
+    private static void failedLoadingPreservesChanges() throws IOException {
+        ShImageChooser chooser = new ShImageChooser();
+        chooser.setImagenBase64(createPngBase64());
+        Object original = chooser.getImagen();
+        for (boolean changed : new boolean[]{false, true}) {
+            chooser.setImagenCambiada(changed);
+            for (String content : new String[]{"contenido-no-base64", "bm8=", "data:image/png,abc"}) {
+                try {
+                    chooser.setImagenBase64(content);
+                    throw new AssertionError("Se esperaba IllegalArgumentException");
+                } catch (IllegalArgumentException expected) {
+                    assertEquals(original, chooser.getImagen(), "imagen conservada tras error");
+                    assertEquals(changed, chooser.isImagenCambiada(), "estado conservado tras error");
+                }
+            }
+        }
+    }
+
+    private static void selectingAndClearingFileMarksChanges() throws IOException {
+        Path imageFile = Files.createTempFile("sh-image-chooser-", ".png");
+        try {
+            Files.write(imageFile, Base64.getDecoder().decode(createPngBase64()));
+            ShImageChooser chooser = new ShImageChooser();
+            chooser.setSelectedFile(imageFile.toFile());
+            assertEquals(true, chooser.isImagenCambiada(), "archivo seleccionado");
+            chooser.setImagenCambiada(false);
+            chooser.setSelectedFile(null);
+            assertEquals(true, chooser.isImagenCambiada(), "archivo eliminado");
+            assertEquals(null, chooser.getImagenBase64(), "imagen eliminada para API");
+        } finally {
+            Files.deleteIfExists(imageFile);
         }
     }
 

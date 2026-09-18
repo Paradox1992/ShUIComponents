@@ -4,6 +4,7 @@ import com.ShDateSelectors.ShDateSelector;
 import com.ShContainers.ShPanel;
 import com.ShImageChoosers.ShImageChooser;
 import com.ShInputs.ShInput;
+import com.ShLookups.ShLookup;
 import java.awt.Component;
 import java.awt.Container;
 import java.util.Collections;
@@ -28,6 +29,9 @@ final class ShInputValidationRepository implements ShInputValidator {
             } else if (field instanceof ShDateSelector dateSelector
                     && !validateAndApplyState(dateSelector)) {
                 validForm[0] = false;
+            } else if (field instanceof ShLookup<?> lookup
+                    && !validateAndApplyState(lookup)) {
+                validForm[0] = false;
             }
         });
         return validForm[0];
@@ -46,6 +50,10 @@ final class ShInputValidationRepository implements ShInputValidator {
                 dateSelector.clear();
             } else if (field instanceof ShImageChooser imageChooser) {
                 imageChooser.setSelectedFile(null);
+            } else if (field instanceof ShLookup<?> lookup) {
+                lookup.clear();
+                lookup.setToolTipText(null);
+                lookup.setVisualState(VisualState.NONE);
             }
         });
     }
@@ -54,6 +62,7 @@ final class ShInputValidationRepository implements ShInputValidator {
         for (Component component : container.getComponents()) {
             if ((component instanceof ShInput
                     || component instanceof ShDateSelector
+                    || component instanceof ShLookup<?>
                     || component instanceof ShImageChooser)
                     && !excluded.contains(component)) {
                 visitor.visit(component);
@@ -80,6 +89,12 @@ final class ShInputValidationRepository implements ShInputValidator {
     private boolean validateAndApplyState(ShDateSelector dateSelector) {
         boolean valid = dateSelector.validateDate();
         dateSelector.setVisualState(valid ? VisualState.NONE : VisualState.ERROR);
+        return valid;
+    }
+
+    private boolean validateAndApplyState(ShLookup<?> lookup) {
+        boolean valid = lookup.isValidInput();
+        lookup.setVisualState(valid ? VisualState.NONE : VisualState.ERROR);
         return valid;
     }
     

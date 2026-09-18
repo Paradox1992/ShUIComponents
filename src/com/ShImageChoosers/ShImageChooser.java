@@ -41,6 +41,7 @@ public class ShImageChooser extends ShPanel {
 
     private Icon imagen;
     private File selectedFile;
+    private boolean imagenCambiada;
 
     public ShImageChooser() {
         configureComponent();
@@ -79,15 +80,25 @@ public class ShImageChooser extends ShPanel {
 
         int result = chooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
-            selectedFile = chooser.getSelectedFile();
-            setImagen(new ImageIcon(selectedFile.getAbsolutePath()));
+            setSelectedFile(chooser.getSelectedFile());
         }
     }
 
+    /**
+     * Reemplaza la imagen y marca un cambio pendiente si el icono es distinto.
+     * Para cargar un icono inicial, restablezca despues imagenCambiada a false.
+     *
+     * @param imagen nueva imagen, o null para quitarla
+     */
     public void setImagen(Icon imagen) {
+        actualizarImagen(imagen, imagenCambiada || this.imagen != imagen);
+    }
+
+    private void actualizarImagen(Icon imagen, boolean cambiada) {
         this.imagen = imagen;
         imagePanel.setImage(imagen);
         imagePanel.setImageEnabled(imagen != null);
+        setImagenCambiada(cambiada);
         repaint();
     }
 
@@ -96,9 +107,34 @@ public class ShImageChooser extends ShPanel {
     }
 
     /**
+     * Indica si hay un cambio de imagen pendiente de guardar en la API.
+     * Se activa al reemplazar o quitar el icono, sin comparar sus pixeles.
+     * Consultar o exportar la imagen no restablece esta propiedad.
+     *
+     * @return true si la imagen fue cambiada desde la carga o el ultimo reinicio
+     */
+    public boolean isImagenCambiada() {
+        return imagenCambiada;
+    }
+
+    /**
+     * Permite restablecer el estado tras guardar correctamente en la API o
+     * cargar una imagen inicial mediante setImagen o setSelectedFile.
+     *
+     * @param imagenCambiada estado de cambio pendiente
+     */
+    public void setImagenCambiada(boolean imagenCambiada) {
+        boolean anterior = this.imagenCambiada;
+        this.imagenCambiada = imagenCambiada;
+        firePropertyChange("imagenCambiada", anterior, imagenCambiada);
+    }
+
+    /**
      * Decodifica y muestra una imagen recibida como texto Base64.
      * Acepta tanto el contenido Base64 puro como una URL de datos, por ejemplo
      * {@code data:image/png;base64,...}. Un valor nulo o vacio limpia la imagen.
+     * La carga se considera el estado inicial recibido de la API y restablece
+     * imagenCambiada a false. Si falla, conserva la imagen y el estado anteriores.
      *
      * @param imagenBase64 imagen codificada en Base64
      * @throws IllegalArgumentException si el texto no contiene una imagen valida
@@ -106,7 +142,7 @@ public class ShImageChooser extends ShPanel {
     public void setImagenBase64(String imagenBase64) {
         if (imagenBase64 == null || imagenBase64.isBlank()) {
             selectedFile = null;
-            setImagen(null);
+            actualizarImagen(null, false);
             return;
         }
 
@@ -127,7 +163,7 @@ public class ShImageChooser extends ShPanel {
             }
 
             selectedFile = null;
-            setImagen(new ImageIcon(image));
+            actualizarImagen(new ImageIcon(image), false);
         } catch (IOException exception) {
             throw new IllegalArgumentException("No se pudo leer la imagen codificada en Base64.", exception);
         }
